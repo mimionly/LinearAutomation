@@ -15,7 +15,7 @@ const getLinearHeaders = () => {
     return null;
   }
   return {
-    Authorization: apiKey,
+    Authorization: `Bearer ${apiKey}`,
     "Content-Type": "application/json",
   };
 };
@@ -80,23 +80,21 @@ export const getAssignedTasks = action({
     if (!headers) {
       // Mock tasks for assigned projects
       if (assignedProjectIds.length === 0) return [];
-      
+
       const mockTasks = [
         { id: "task_1", title: "Build project list UI", identifier: "LAD-12", state: { name: "In Progress" }, project: { id: "proj_2", name: "Linear Automation Dashboard" } },
         { id: "task_2", title: "Setup Clerk Auth", identifier: "LAD-13", state: { name: "Done" }, project: { id: "proj_2", name: "Linear Automation Dashboard" } },
         { id: "task_3", title: "Deploy to production", identifier: "DEV-45", state: { name: "Todo" }, project: { id: "proj_1", name: "Devvoid Website Rewrite" } },
       ];
-      
+
       return mockTasks.filter(t => assignedProjectIds.includes(t.project.id));
     }
 
     if (assignedProjectIds.length === 0) return [];
 
-    // linear API max limits or filtering might be needed
-    // Assuming a simple query to fetch tasks for the assigned projects
     const query = `
-      query {
-        issues(filter: { project: { id: { in: ${JSON.stringify(assignedProjectIds)} } } }) {
+      query ($projectIds: [String!]) {
+        issues(filter: { project: { id: { in: $projectIds } } }) {
           nodes {
             id
             title
@@ -117,7 +115,10 @@ export const getAssignedTasks = action({
     const res = await fetch("https://api.linear.app/graphql", {
       method: "POST",
       headers,
-      body: JSON.stringify({ query }),
+      body: JSON.stringify({
+        query,
+        variables: { projectIds: assignedProjectIds },
+      }),
     });
 
     if (!res.ok) {
