@@ -233,11 +233,21 @@ export const getAllDevelopers = query({
   },
 });
 
+export const getDeveloperByClerkId = query({
+  args: { clerkId: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("developer")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
+      .first();
+  },
+});
+
 // syncLinearData stays as action, but uses ctx.runQuery instead of ctx.db
 export const syncLinearData = internalAction({
   args: { clerkId: v.string() },
   handler: async (ctx, args) => {
-    const developer = await ctx.runQuery(api.developer.getByClerkId, {
+    const developer = await ctx.runQuery(api.linear.getDeveloperByClerkId, {
       clerkId: args.clerkId,
     });
     if (!developer || developer.role !== "admin")
