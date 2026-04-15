@@ -342,3 +342,17 @@ export const syncLinearData = internalAction({
     };
   },
 });
+
+export const logUserAction = mutation({
+  args: {
+    clerkId: v.string(),
+    action: v.union(v.literal("login"), v.literal("logout")),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.insert("userLogs", {
+      clerkId: args.clerkId,
+      action: args.action,
+      timestamp: Date.now(),
+    });
+  },
+});

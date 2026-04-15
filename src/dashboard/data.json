@@ -5,8 +5,8 @@
     "type": "Cover page",
     "status": "In Process",
     "target": "18",
-    "limit": "5",
-    "reviewer": "Eddie Lake"
+    "Team Member": "John ",
+    "reviewer": "Aneesh Bhat"
   },
   {
     "id": 2,
@@ -14,8 +14,8 @@
     "type": "Table of contents",
     "status": "Done",
     "target": "29",
-    "limit": "24",
-    "reviewer": "Eddie Lake"
+    "Team Member": " ",
+    "reviewer": ""
   },
   {
     "id": 3,
@@ -23,8 +23,8 @@
     "type": "Narrative",
     "status": "Done",
     "target": "10",
-    "limit": "13",
-    "reviewer": "Eddie Lake"
+    "Team Member": " ",
+    "reviewer": ""
   },
   {
     "id": 4,
@@ -32,7 +32,7 @@
     "type": "Narrative",
     "status": "Done",
     "target": "27",
-    "limit": "23",
+    "Team Member": " ",
     "reviewer": "Jamik Tashpulatov"
   },
   {
@@ -41,7 +41,7 @@
     "type": "Narrative",
     "status": "In Process",
     "target": "2",
-    "limit": "16",
+    "Team Member": " ",
     "reviewer": "Jamik Tashpulatov"
   },
   {
@@ -50,7 +50,7 @@
     "type": "Narrative",
     "status": "In Process",
     "target": "20",
-    "limit": "8",
+    "Team Member": " ",
     "reviewer": "Jamik Tashpulatov"
   },
   {
@@ -59,7 +59,7 @@
     "type": "Narrative",
     "status": "In Process",
     "target": "19",
-    "limit": "21",
+    "Team Member": " ",
     "reviewer": "Jamik Tashpulatov"
   },
   {
@@ -68,7 +68,7 @@
     "type": "Narrative",
     "status": "Done",
     "target": "25",
-    "limit": "26",
+    "Team Member": " ",
     "reviewer": "Assign reviewer"
   },
   {
@@ -77,7 +77,7 @@
     "type": "Technical content",
     "status": "Done",
     "target": "7",
-    "limit": "23",
+    "Team Member": " ",
     "reviewer": "Assign reviewer"
   },
   {
@@ -86,7 +86,7 @@
     "type": "Narrative",
     "status": "Done",
     "target": "30",
-    "limit": "28",
+    "Team Member": " ",
     "reviewer": "Assign reviewer"
   },
   {
@@ -95,7 +95,7 @@
     "type": "Narrative",
     "status": "Done",
     "target": "9",
-    "limit": "31",
+    "Team Member": " ",
     "reviewer": "Assign reviewer"
   },
   {
@@ -104,7 +104,7 @@
     "type": "Narrative",
     "status": "Done",
     "target": "12",
-    "limit": "0",
+    "Team Member": " ",
     "reviewer": "Assign reviewer"
   },
   {
@@ -113,7 +113,7 @@
     "type": "Narrative",
     "status": "Done",
     "target": "22",
-    "limit": "33",
+    "Team Member": " ",
     "reviewer": "Assign reviewer"
   },
   {
@@ -122,7 +122,7 @@
     "type": "Narrative",
     "status": "Done",
     "target": "15",
-    "limit": "34",
+    "Team Member": " ",
     "reviewer": "Assign reviewer"
   },
   {
@@ -131,7 +131,7 @@
     "type": "Narrative",
     "status": "Done",
     "target": "3",
-    "limit": "35",
+    "Team Member": " ",
     "reviewer": "Assign reviewer"
   },
   {
@@ -140,7 +140,7 @@
     "type": "Narrative",
     "status": "In Process",
     "target": "6",
-    "limit": "36",
+    "Team Member": " ",
     "reviewer": "Assign reviewer"
   },
   {
@@ -149,7 +149,7 @@
     "type": "Narrative",
     "status": "Done",
     "target": "4",
-    "limit": "37",
+    "Team Member": " ",
     "reviewer": "Assign reviewer"
   },
   {
@@ -158,7 +158,7 @@
     "type": "Plain language",
     "status": "Done",
     "target": "14",
-    "limit": "38",
+    "Team Member": " ",
     "reviewer": "Assign reviewer"
   },
   {
@@ -167,7 +167,7 @@
     "type": "Narrative",
     "status": "Done",
     "target": "17",
-    "limit": "39",
+    "Team Member": " ",
     "reviewer": "Assign reviewer"
   },
   {
@@ -176,7 +176,7 @@
     "type": "Narrative",
     "status": "Done",
     "target": "11",
-    "limit": "40",
+    "Team Member": " ",
     "reviewer": "Assign reviewer"
   },
   {
@@ -185,7 +185,7 @@
     "type": "Technical content",
     "status": "In Process",
     "target": "24",
-    "limit": "18",
+    "Team Member": " ",
     "reviewer": "Maya Johnson"
   },
   {
@@ -194,7 +194,7 @@
     "type": "Narrative",
     "status": "Done",
     "target": "15",
-    "limit": "22",
+    "Team Member": " ",
     "reviewer": "Carlos Rodriguez"
   },
   {
@@ -203,7 +203,7 @@
     "type": "Legal",
     "status": "In Process",
     "target": "31",
-    "limit": "27",
+    "Team Member": " ",
     "reviewer": "Sarah Chen"
   },
   {
@@ -212,7 +212,7 @@
     "type": "Technical content",
     "status": "Done",
     "target": "8",
-    "limit": "12",
+    "Team Member": " ",
     "reviewer": "Raj Patel"
   },
   {
@@ -221,7 +221,7 @@
     "type": "Visual",
     "status": "In Process",
     "target": "19",
-    "limit": "25",
+    "Team Member": " ",
     "reviewer": "Leila Ahmadi"
   },
   {
@@ -230,7 +230,7 @@
     "type": "Technical content",
     "status": "Done",
     "target": "22",
-    "limit": "20",
+    "Team Member": " ",
     "reviewer": "Thomas Wilson"
   },
   {
@@ -239,7 +239,7 @@
     "type": "Technical content",
     "status": "In Process",
     "target": "17",
-    "limit": "14",
+    "Team Member": " ",
     "reviewer": "Assign reviewer"
   },
   {
@@ -248,8 +248,8 @@
     "type": "Narrative",
     "status": "Done",
     "target": "26",
-    "limit": "30",
-    "reviewer": "Eddie Lake"
+    "Team Member": " ",
+    "reviewer": ""
   },
   {
     "id": 29,
@@ -257,7 +257,7 @@
     "type": "Financial",
     "status": "In Process",
     "target": "13",
-    "limit": "16",
+    "Team Member": " ",
     "reviewer": "Jamik Tashpulatov"
   },
   {
@@ -266,7 +266,7 @@
     "type": "Research",
     "status": "Done",
     "target": "29",
-    "limit": "32",
+    "Team Member": " ",
     "reviewer": "Sophia Martinez"
   },
   {
@@ -275,7 +275,7 @@
     "type": "Research",
     "status": "In Process",
     "target": "21",
-    "limit": "19",
+    "Team Member": " ",
     "reviewer": "Assign reviewer"
   },
   {
@@ -284,7 +284,7 @@
     "type": "Technical content",
     "status": "Done",
     "target": "16",
-    "limit": "23",
+    "Team Member": " ",
     "reviewer": "Alex Thompson"
   },
   {
@@ -293,7 +293,7 @@
     "type": "Research",
     "status": "In Process",
     "target": "27",
-    "limit": "24",
+    "Team Member": " ",
     "reviewer": "Nina Patel"
   },
   {
@@ -302,7 +302,7 @@
     "type": "Legal",
     "status": "Done",
     "target": "18",
-    "limit": "21",
+    "Team Member": " ",
     "reviewer": "Assign reviewer"
   },
   {
@@ -311,7 +311,7 @@
     "type": "Technical content",
     "status": "In Process",
     "target": "23",
-    "limit": "26",
+    "Team Member": " ",
     "reviewer": "David Kim"
   },
   {
@@ -320,7 +320,7 @@
     "type": "Technical content",
     "status": "Done",
     "target": "14",
-    "limit": "17",
+    "Team Member": " ",
     "reviewer": "Jamik Tashpulatov"
   },
   {
@@ -329,8 +329,8 @@
     "type": "Technical content",
     "status": "In Process",
     "target": "25",
-    "limit": "28",
-    "reviewer": "Eddie Lake"
+    "Team Member": " ",
+    "reviewer": ""
   },
   {
     "id": 38,
@@ -338,7 +338,7 @@
     "type": "Research",
     "status": "Done",
     "target": "20",
-    "limit": "15",
+    "Team Member": " ",
     "reviewer": "Assign reviewer"
   },
   {
@@ -347,7 +347,7 @@
     "type": "Narrative",
     "status": "In Process",
     "target": "12",
-    "limit": "19",
+    "Team Member": " ",
     "reviewer": "Maria Garcia"
   },
   {
@@ -356,7 +356,7 @@
     "type": "Technical content",
     "status": "Done",
     "target": "28",
-    "limit": "31",
+    "Team Member": " ",
     "reviewer": "James Wilson"
   },
   {
@@ -365,7 +365,7 @@
     "type": "Technical content",
     "status": "In Process",
     "target": "19",
-    "limit": "22",
+    "Team Member": " ",
     "reviewer": "Assign reviewer"
   },
   {
@@ -374,7 +374,7 @@
     "type": "Technical content",
     "status": "Done",
     "target": "30",
-    "limit": "33",
+    "Team Member": " ",
     "reviewer": "Priya Singh"
   },
   {
@@ -383,8 +383,8 @@
     "type": "Research",
     "status": "In Process",
     "target": "11",
-    "limit": "14",
-    "reviewer": "Eddie Lake"
+    "Team Member": " ",
+    "reviewer": ""
   },
   {
     "id": 44,
@@ -392,7 +392,7 @@
     "type": "Research",
     "status": "Done",
     "target": "24",
-    "limit": "27",
+    "Team Member": " ",
     "reviewer": "Assign reviewer"
   },
   {
@@ -401,7 +401,7 @@
     "type": "Legal",
     "status": "In Process",
     "target": "17",
-    "limit": "20",
+    "Team Member": " ",
     "reviewer": "Sarah Johnson"
   },
   {
@@ -410,7 +410,7 @@
     "type": "Narrative",
     "status": "Done",
     "target": "22",
-    "limit": "25",
+    "Team Member": " ",
     "reviewer": "Jamik Tashpulatov"
   },
   {
@@ -419,7 +419,7 @@
     "type": "Technical content",
     "status": "In Process",
     "target": "15",
-    "limit": "18",
+    "Team Member": " ",
     "reviewer": "Assign reviewer"
   },
   {
@@ -428,7 +428,7 @@
     "type": "Technical content",
     "status": "Done",
     "target": "26",
-    "limit": "29",
+    "Team Member": " ",
     "reviewer": "Michael Chen"
   },
   {
@@ -437,7 +437,7 @@
     "type": "Legal",
     "status": "In Process",
     "target": "13",
-    "limit": "16",
+    "Team Member": " ",
     "reviewer": "Assign reviewer"
   },
   {
@@ -446,8 +446,8 @@
     "type": "Technical content",
     "status": "Done",
     "target": "28",
-    "limit": "31",
-    "reviewer": "Eddie Lake"
+    "Team Member": " ",
+    "reviewer": ""
   },
   {
     "id": 51,
@@ -455,7 +455,7 @@
     "type": "Technical content",
     "status": "In Process",
     "target": "21",
-    "limit": "24",
+    "Team Member": " ",
     "reviewer": "Jamik Tashpulatov"
   },
   {
@@ -464,7 +464,7 @@
     "type": "Technical content",
     "status": "Done",
     "target": "16",
-    "limit": "19",
+    "Team Member": " ",
     "reviewer": "Assign reviewer"
   },
   {
@@ -473,7 +473,7 @@
     "type": "Technical content",
     "status": "In Process",
     "target": "29",
-    "limit": "32",
+    "Team Member": " ",
     "reviewer": "Lisa Wong"
   },
   {
@@ -482,8 +482,8 @@
     "type": "Planning",
     "status": "Done",
     "target": "14",
-    "limit": "17",
-    "reviewer": "Eddie Lake"
+    "Team Member": " ",
+    "reviewer": ""
   },
   {
     "id": 55,
@@ -491,7 +491,7 @@
     "type": "Planning",
     "status": "In Process",
     "target": "27",
-    "limit": "30",
+    "Team Member": " ",
     "reviewer": "Assign reviewer"
   },
   {
@@ -500,7 +500,7 @@
     "type": "Planning",
     "status": "Done",
     "target": "20",
-    "limit": "23",
+    "Team Member": " ",
     "reviewer": "Jamik Tashpulatov"
   },
   {
@@ -509,7 +509,7 @@
     "type": "Planning",
     "status": "In Process",
     "target": "15",
-    "limit": "18",
+    "Team Member": " ",
     "reviewer": "Assign reviewer"
   },
   {
@@ -518,8 +518,8 @@
     "type": "Planning",
     "status": "Done",
     "target": "30",
-    "limit": "33",
-    "reviewer": "Eddie Lake"
+    "Team Member": " ",
+    "reviewer": ""
   },
   {
     "id": 59,
@@ -527,7 +527,7 @@
     "type": "Technical content",
     "status": "In Process",
     "target": "23",
-    "limit": "26",
+    "Team Member": " ",
     "reviewer": "Jamik Tashpulatov"
   },
   {
@@ -536,7 +536,7 @@
     "type": "Technical content",
     "status": "Done",
     "target": "18",
-    "limit": "21",
+    "Team Member": " ",
     "reviewer": "Assign reviewer"
   },
   {
@@ -545,7 +545,7 @@
     "type": "Technical content",
     "status": "In Process",
     "target": "25",
-    "limit": "28",
+    "Team Member": " ",
     "reviewer": "Daniel Park"
   },
   {
@@ -554,8 +554,8 @@
     "type": "Technical content",
     "status": "Done",
     "target": "12",
-    "limit": "15",
-    "reviewer": "Eddie Lake"
+    "Team Member": " ",
+    "reviewer": ""
   },
   {
     "id": 63,
@@ -563,7 +563,7 @@
     "type": "Technical content",
     "status": "In Process",
     "target": "27",
-    "limit": "30",
+    "Team Member": " ",
     "reviewer": "Jamik Tashpulatov"
   },
   {
@@ -572,7 +572,7 @@
     "type": "Planning",
     "status": "Done",
     "target": "22",
-    "limit": "25",
+    "Team Member": " ",
     "reviewer": "Assign reviewer"
   },
   {
@@ -581,7 +581,7 @@
     "type": "Planning",
     "status": "In Process",
     "target": "19",
-    "limit": "22",
+    "Team Member": " ",
     "reviewer": "Emma Davis"
   },
   {
@@ -590,8 +590,8 @@
     "type": "Technical content",
     "status": "Done",
     "target": "24",
-    "limit": "27",
-    "reviewer": "Eddie Lake"
+    "Team Member": " ",
+    "reviewer": ""
   },
   {
     "id": 67,
@@ -599,7 +599,7 @@
     "type": "Planning",
     "status": "In Process",
     "target": "21",
-    "limit": "24",
+    "Team Member": " ",
     "reviewer": "Jamik Tashpulatov"
   },
   {
@@ -608,7 +608,7 @@
     "type": "Legal",
     "status": "Done",
     "target": "26",
-    "limit": "29",
+    "Team Member": " ",
     "reviewer": "Assign reviewer"
   }
 ]

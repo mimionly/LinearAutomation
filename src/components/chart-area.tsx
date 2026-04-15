@@ -177,7 +177,9 @@ export function ChartAreaInteractive() {
         <CardAction>
           <ToggleGroup
             type="single"
+           // @ts-expect-error
             value={timeRange}
+            // @ts-expect-error
             onValueChange={setTimeRange}
             variant="outline"
             className="hidden *:data-[slot=toggle-group-item]:px-4! @[767px]/card:flex"
@@ -186,6 +188,7 @@ export function ChartAreaInteractive() {
             <ToggleGroupItem value="30d">Last 30 days</ToggleGroupItem>
             <ToggleGroupItem value="7d">Last 7 days</ToggleGroupItem>
           </ToggleGroup>
+          {/* @ts-ignore */}
           <Select value={timeRange} onValueChange={setTimeRange}>
             <SelectTrigger
               className="flex w-40 **:data-[slot=select-value]:block **:data-[slot=select-value]:truncate @[767px]/card:hidden"

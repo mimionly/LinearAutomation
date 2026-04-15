@@ -41,6 +41,11 @@ export default defineSchema({
     })),
     createdAt: v.number(),
     updatedAt: v.number(),
-  }).index("by_linear_id", ["linearId"])
+  }).index("by_linear_id", ["linearId"]),
   
+  userLogs: defineTable({
+    clerkId: v.string(),
+    action: v.union(v.literal("login"), v.literal("logout")),
+    timestamp: v.number(),
+  }).index("by_clerk_id", ["clerkId"]),
 });

@@ -1,28 +1,19 @@
-"use client"
 
-import * as React from "react"
+
+import * as React from "react";
 import {
   IconCamera,
-  IconChartBar,
   IconDashboard,
-  IconDatabase,
   IconFileAi,
   IconFileDescription,
-  IconFileWord,
   IconFolder,
-  IconHelp,
-  IconInnerShadowTop,
-  IconListDetails,
-  IconReport,
-  IconSearch,
-  IconSettings,
-  IconUsers,
-} from "@tabler/icons-react"
 
-import { NavDocuments } from "@/components/nav-documents"
-import { NavMain } from "@/components/nav-main"
-import { NavSecondary } from "@/components/nav-secondary"
-import { NavUser } from "@/components/nav-user"
+  IconUsers,
+} from "@tabler/icons-react";
+
+import { NavMain } from "@/components/nav-main";
+
+import { NavUser } from "@/components/nav-users";
 import {
   Sidebar,
   SidebarContent,
@@ -31,7 +22,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
 
 const data = {
   user: {
@@ -42,27 +33,18 @@ const data = {
   navMain: [
     {
       title: "Dashboard",
-      url: "#",
+      url: "/",
       icon: IconDashboard,
     },
-    {
-      title: "Lifecycle",
-      url: "#",
-      icon: IconListDetails,
-    },
-    {
-      title: "Analytics",
-      url: "#",
-      icon: IconChartBar,
-    },
+
     {
       title: "Projects",
-      url: "#",
+      url: "/projects",
       icon: IconFolder,
     },
     {
       title: "Team",
-      url: "#",
+      url: "/team",
       icon: IconUsers,
     },
   ],
@@ -114,68 +96,39 @@ const data = {
       ],
     },
   ],
-  navSecondary: [
-    {
-      title: "Settings",
-      url: "#",
-      icon: IconSettings,
-    },
-    {
-      title: "Get Help",
-      url: "#",
-      icon: IconHelp,
-    },
-    {
-      title: "Search",
-      url: "#",
-      icon: IconSearch,
-    },
-  ],
-  documents: [
-    {
-      name: "Data Library",
-      url: "#",
-      icon: IconDatabase,
-    },
-    {
-      name: "Reports",
-      url: "#",
-      icon: IconReport,
-    },
-    {
-      name: "Word Assistant",
-      url: "#",
-      icon: IconFileWord,
-    },
-  ],
-}
+};
+
+import { useUser } from "@clerk/clerk-react";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { user } = useUser();
+  const userData = {
+    name: user?.fullName || user?.username || data.user.name,
+    email: user?.primaryEmailAddress?.emailAddress || data.user.email,
+    avatar: user?.imageUrl || data.user.avatar,
+  };
+
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
-              asChild
               className="data-[slot=sidebar-menu-button]:p-1.5!"
+              render={<a href="/linearAutomation/src/dashboard/" />}
             >
-              <a href="#">
-                <IconInnerShadowTop className="size-5!" />
-                <span className="text-base font-semibold">Acme Inc.</span>
-              </a>
+              <img src="/devVoid.jpeg" alt="DevVoid" className="size-9!" />
+              <span className="text-base font-semibold">DevVoid</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavDocuments items={data.documents} />
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={userData} />
       </SidebarFooter>
     </Sidebar>
-  )
+  );
 }

@@ -1,5 +1,4 @@
-import "./index.css";
-import "@/components/ui/sidebar.css";   
+import "../index.css";
 import {
   SidebarInset,
   SidebarProvider,
