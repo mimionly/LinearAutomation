@@ -1,7 +1,7 @@
 import { type Icon } from "@tabler/icons-react";
 
 import {
-  DropdownMenuContent,
+  
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -11,7 +11,7 @@ import {
   SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
+ 
 } from "@/components/ui/sidebar";
 
 export function NavDocuments({
@@ -23,7 +23,7 @@ export function NavDocuments({
     icon: Icon;
   }[];
 }) {
-  const { isMobile } = useSidebar();
+  
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
@@ -44,11 +44,7 @@ export function NavDocuments({
                 />
               }
             ></DropdownMenuTrigger>
-            <DropdownMenuContent
-              className="w-24 rounded-lg"
-              side={isMobile ? "bottom" : "right"}
-              align={isMobile ? "end" : "start"}
-            ></DropdownMenuContent>
+            
           </SidebarMenuItem>
         ))}
         <SidebarMenuItem>

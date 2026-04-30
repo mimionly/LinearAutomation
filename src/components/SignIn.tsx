@@ -41,12 +41,12 @@ export default function SignIn() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-950 px-4">
+    <div className="flex min-h-screen items-center justify-center px-4">
       <div className="glass-panel w-full max-w-md rounded-2xl p-8 text-center shadow-2xl relative overflow-hidden">
         
         {/* Glow effects */}
-        <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 blur-[50px] rounded-full pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-32 h-32 bg-purple-500/10 blur-[50px] rounded-full pointer-events-none" />
+        <div className="absolute top-0 right-0 w-32 h-32  blur-[50px] rounded-full pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-32 h-32  blur-[50px] rounded-full pointer-events-none" />
 
         <img
           src="/devVoid.jpeg"
@@ -54,7 +54,7 @@ export default function SignIn() {
           className="h-16 w-auto rounded-2xl mx-auto mb-6 relative z-10"
           onError={(e) => { e.currentTarget.style.display = "none" }}
         />
-        <h1 className="mb-2 text-3xl font-bold text-white relative z-10">Devvoid</h1>
+        <h1 className="mb-2 text-3xl font-bold text-black relative z-10">DevVoid</h1>
         <p className="mb-8 text-zinc-400 relative z-10">
           Streamlined task management dashboard linked with our Linear organization.
         </p>

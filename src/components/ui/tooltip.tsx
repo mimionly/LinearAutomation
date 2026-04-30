@@ -1,5 +1,3 @@
-"use client"
-
 import { Tooltip as TooltipPrimitive } from "@base-ui/react/tooltip"
 
 import { cn } from "@/lib/utils"
@@ -15,7 +13,7 @@ function TooltipProvider({
       {...props}
     />
   )
-}
+} 
 
 function Tooltip({ ...props }: TooltipPrimitive.Root.Props) {
   return <TooltipPrimitive.Root data-slot="tooltip" {...props} />
@@ -27,11 +25,11 @@ function TooltipTrigger({ ...props }: TooltipPrimitive.Trigger.Props) {
 
 function TooltipContent({
   className,
-  side = "top",
+  side = "top",     
   sideOffset = 4,
   align = "center",
   alignOffset = 0,
-  children,
+  children,   
   ...props
 }: TooltipPrimitive.Popup.Props &
   Pick<

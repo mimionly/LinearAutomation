@@ -2,7 +2,7 @@ import { type Icon } from "@tabler/icons-react";
 
 import {
   DropdownMenu,
-  DropdownMenuContent,
+  
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -12,7 +12,7 @@ import {
   SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
+
 } from "@/components/ui/sidebar";
 
 export function NavMain({
@@ -24,7 +24,7 @@ export function NavMain({
     icon: Icon;
   }[];
 }) {
-  const { isMobile } = useSidebar();
+  
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
@@ -45,11 +45,7 @@ export function NavMain({
                   />
                 }
               ></DropdownMenuTrigger>
-              <DropdownMenuContent
-                className="w-24 rounded-lg"
-                side={isMobile ? "bottom" : "right"}
-                align={isMobile ? "end" : "start"}
-              ></DropdownMenuContent>
+             
             </DropdownMenu>
           </SidebarMenuItem>
         ))}

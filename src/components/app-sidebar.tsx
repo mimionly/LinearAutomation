@@ -1,5 +1,3 @@
-
-
 import * as React from "react";
 import {
   IconCamera,
@@ -7,13 +5,12 @@ import {
   IconFileAi,
   IconFileDescription,
   IconFolder,
-
   IconUsers,
 } from "@tabler/icons-react";
 
 import { NavMain } from "@/components/nav-main";
 
-import { NavUser } from "@/components/nav-users";
+
 import {
   Sidebar,
   SidebarContent,
@@ -25,11 +22,6 @@ import {
 } from "@/components/ui/sidebar";
 
 const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
   navMain: [
     {
       title: "Dashboard",
@@ -98,15 +90,11 @@ const data = {
   ],
 };
 
-import { useUser } from "@clerk/clerk-react";
+
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { user } = useUser();
-  const userData = {
-    name: user?.fullName || user?.username || data.user.name,
-    email: user?.primaryEmailAddress?.emailAddress || data.user.email,
-    avatar: user?.imageUrl || data.user.avatar,
-  };
+  
+ 
 
   return (
     <Sidebar collapsible="offcanvas" {...props}>
@@ -127,7 +115,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavMain items={data.navMain} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={userData} />
+        
       </SidebarFooter>
     </Sidebar>
   );

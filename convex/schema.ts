@@ -2,50 +2,25 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
 export default defineSchema({
-  developer: defineTable({
-    clerkId : v.string(), 
-    name : v.string() , 
-    email: v.string() , 
-    role : v.union( v.literal("admin") , v.literal("developer")),
-    assignedProjects : v.optional(v.array(v.string())),
-    avatarUrl : v.optional(v.string()),
-    createdAt: v.optional(v.number()), 
-  }).index("by_clerk_id" , ['clerkId']),
+  linearProjects: defineTable({
+    id: v.string(),
+    name: v.string(),
+    state: v.string(),
+    description: v.optional(v.string()),
+    
+  })
+    .index("by_linearId", ["id"])
+    .index("by_state", ["state"]),
 
-  projects : defineTable({ // linear projects  Table 
-    linearId : v.string() , 
-    name : v.string() , 
-    description :v.string(),
-    state: v.object({
-      id : v.string(), 
-      name : v.string() ,
-      type : v.string(), 
-    }),
-    createdAt : v.number() ,
-    updatedAt: v.number(),  
-  }).index("by_linear_id" , ['linearId']),
-
-  issues : defineTable ({ // <-- linear Taskks table 
-    linearId : v.string() , 
-    title : v.string() , 
-    identifier : v.string() , 
-    description : v.string() ,
-    priority : v.string() ,
-    state : v.object({
-      name : v.string() , 
-      type  : v.optional(v.string()),
-    }),
-    assignee: v.optional(v.object({
-      name: v.string(),
-      email: v.string() , 
-    })),
-    createdAt: v.number(),
-    updatedAt: v.number(),
-  }).index("by_linear_id", ["linearId"]),
-  
   userLogs: defineTable({
+    action: v.string(),
     clerkId: v.string(),
-    action: v.union(v.literal("login"), v.literal("logout")),
-    timestamp: v.number(),
-  }).index("by_clerk_id", ["clerkId"]),
+    user: v.optional(v.union(v.literal("admin"), v.literal("developer"))),
+  }).index("by_clerkId", ["clerkId"]),
+  assignments: defineTable({
+    clerkId: v.string(),
+    projectId: v.string(),
+  })
+    .index("by_clerkId", ["clerkId"])
+    .index("by_projectId", ["projectId"]),
 });

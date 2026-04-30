@@ -15,8 +15,7 @@ export function SiteHeader() {
         <div className="ml-auto flex items-center gap-2">
           <Button variant="ghost" size="sm" className="hidden sm:flex">
             <a
-              href="https://github.com/shadcn-ui/ui/tree/main/apps/v4/app/(examples)/dashboard"
-              rel="noopener noreferrer"
+              href="https://github.com/mimionly" rel ="noopener noreferrer"
               target="_blank"
               className="dark:text-foreground"
             >

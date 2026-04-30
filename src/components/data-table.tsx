@@ -30,7 +30,7 @@ import {
   IconLayoutColumns,
   IconLoader,
  
-  IconTrendingUp,
+  
 } from "@tabler/icons-react"
 import {
   flexRender,
@@ -63,10 +63,10 @@ import {
 
 import {
   Drawer,
-  DrawerClose,
+ 
   DrawerContent,
   DrawerDescription,
-  DrawerFooter,
+ 
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
@@ -206,7 +206,7 @@ function createColumns(
 
 function DraggableRow({ row }: { row: Row<z.infer<typeof schema>> }) {
   const { transform, transition, setNodeRef, isDragging } = useSortable({
-    id: row.original.id,
+    id: row.original.id,              
   })
 
   return (
@@ -217,7 +217,7 @@ function DraggableRow({ row }: { row: Row<z.infer<typeof schema>> }) {
       className="relative z-0 data-[dragging=true]:z-10 data-[dragging=true]:opacity-80"
       style={{
         transform: CSS.Transform.toString(transform),
-        transition: transition,
+        transition: transition,    
       }}
     >
       {row.getVisibleCells().map((cell) => (
@@ -365,7 +365,7 @@ export function DataTable({
                         <TableHead key={header.id} colSpan={header.colSpan}>
                           {header.isPlaceholder
                             ? null
-                            : flexRender(
+                            : flexRender( 
                               header.column.columnDef.header,
                               header.getContext()
                             )}
@@ -383,7 +383,7 @@ export function DataTable({
                   >
                     {table.getRowModel().rows.map((row) => (
                       <DraggableRow key={row.id} row={row} />
-                    ))}
+                    ))}   
                   </SortableContext>
                 ) : (
                   <TableRow>
@@ -403,7 +403,7 @@ export function DataTable({
           <div className="hidden flex-1 text-sm text-muted-foreground lg:flex">
             {table.getFilteredSelectedRowModel().rows.length} of{" "}
             {table.getFilteredRowModel().rows.length} row(s) selected.
-          </div>
+          </div> 
           <div className="flex w-full items-center gap-8 lg:w-fit">
             <div className="hidden items-center gap-2 lg:flex">
               <Label htmlFor="rows-per-page" className="text-sm font-medium">
@@ -417,7 +417,7 @@ export function DataTable({
               >
                 <SelectTrigger size="sm" className="w-20" id="rows-per-page">
                   <SelectValue
-                    placeholder={table.getState().pagination.pageSize}
+                    placeholder={table.getState().pagination.pageSize} 
                   />
                 </SelectTrigger>
                 <SelectContent side="top">
@@ -497,21 +497,15 @@ export function DataTable({
 }
 
 const chartData = [
-  { month: "January", desktop: 186, mobile: 80 },
-  { month: "February", desktop: 305, mobile: 200 },
-  { month: "March", desktop: 237, mobile: 120 },
-  { month: "April", desktop: 73, mobile: 190 },
-  { month: "May", desktop: 209, mobile: 130 },
-  { month: "June", desktop: 214, mobile: 140 },
 ]
 
 const chartConfig = {
-  desktop: {
-    label: "Desktop",
+  Projects: {
+    label: "Projects",
     color: "var(--primary)",
   },
-  mobile: {
-    label: "Mobile",
+  Issues: {
+    label: "Issues",
     color: "var(--primary)",
   },
 } satisfies ChartConfig
@@ -565,34 +559,27 @@ function TableCellViewer({
                     content={<ChartTooltipContent indicator="dot" />}
                   />
                   <Area
-                    dataKey="mobile"
+                    dataKey="Projects"
                     type="natural"
-                    fill="var(--color-mobile)"
+                    fill="var(--color-projects)"
                     fillOpacity={0.6}
-                    stroke="var(--color-mobile)"
+                    stroke="var(--color-projects)"
                     stackId="a"
                   />
                   <Area
-                    dataKey="desktop"
+                    dataKey="Issues"
                     type="natural"
-                    fill="var(--color-desktop)"
+                    fill="var(--color-issues)"
                     fillOpacity={0.4}
-                    stroke="var(--color-desktop)"
+                    stroke="var(--color-issues)"
                     stackId="a"
                   />
                 </AreaChart>
               </ChartContainer>
               <Separator />
               <div className="grid gap-2">
-                <div className="flex gap-2 leading-none font-medium">
-                  Trending up by 5.2% this month{" "}
-                  <IconTrendingUp className="size-4" />
-                </div>
-                <div className="text-muted-foreground">
-                  Showing total visitors for the last 6 months. This is just
-                  some random text to test the layout. It spans multiple lines
-                  and should wrap around.
-                </div>
+               
+              
               </div>
               <Separator />
             </>
@@ -605,29 +592,7 @@ function TableCellViewer({
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-3">
                 <Label htmlFor="type">Type</Label>
-                <Select defaultValue={item.type}>
-                  <SelectTrigger id="type" className="w-full">
-                    <SelectValue placeholder="Select a type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Table of Contents">
-                      Table of Contents
-                    </SelectItem>
-                    <SelectItem value="Executive Summary">
-                      Executive Summary
-                    </SelectItem>
-                    <SelectItem value="Technical Approach">
-                      Technical Approach
-                    </SelectItem>
-                    <SelectItem value="Design">Design</SelectItem>
-                    <SelectItem value="Capabilities">Capabilities</SelectItem>
-                    <SelectItem value="Focus Documents">
-                      Focus Documents
-                    </SelectItem>
-                    <SelectItem value="Narrative">Narrative</SelectItem>
-                    <SelectItem value="Cover Page">Cover Page</SelectItem>
-                  </SelectContent>
-                </Select>
+                
               </div>
               <div className="flex flex-col gap-3">
                 <Label htmlFor="status">Status</Label>
@@ -664,22 +629,17 @@ function TableCellViewer({
                   <SelectValue placeholder="Select a reviewer" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Eddie Lake">Eddie Lake</SelectItem>
-                  <SelectItem value="Jamik Tashpulatov">
-                    Jamik Tashpulatov
+                  <SelectItem value="Eddie Lake">Aneesh Bhat</SelectItem>
+                  <SelectItem value="Aneesh Bhat">
+                    Aneesh Bhat
                   </SelectItem>
-                  <SelectItem value="Emily Whalen">Emily Whalen</SelectItem>
+                  <SelectItem value="Aneesh Bhat">Aneesh Bhat</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </form>
         </div>
-        <DrawerFooter>
-          <Button>Submit</Button>
-          <DrawerClose>
-            <Button variant="outline">Done</Button>
-          </DrawerClose>
-        </DrawerFooter>
+       
       </DrawerContent>
     </Drawer>
   )

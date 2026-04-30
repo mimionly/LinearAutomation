@@ -10,13 +10,14 @@ import { api } from "../convex/_generated/api"
 export default function App() {
   const { user, isSignedIn, isLoaded } = useUser()
   const logAction = useMutation(api.linear.logUserAction)
+  
 
   useEffect(() => {
-    if (isSignedIn && user?.id) {
-      const alreadyLogged = sessionStorage.getItem("hasLoggedLogin");
+    if (isSignedIn && user?.id ) {
+      const alreadyLogged = localStorage.getItem("hasLoggedLogin");
       if (!alreadyLogged) {
-        logAction({ clerkId: user.id, action: "login" }).catch(console.error);
-        sessionStorage.setItem("hasLoggedLogin", "true");
+        logAction({ _id: user.id, action: "login" }).catch(console.error);
+        localStorage.setItem("hasLoggedLogin", "true");
       }
     }
   }, [isSignedIn, user?.id, logAction])
