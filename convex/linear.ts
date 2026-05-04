@@ -1,59 +1,154 @@
-import { internalMutation, query, mutation } from "./_generated/server";
+import { internalMutation, internalAction } from "./_generated/server";
 import { v } from "convex/values";
+import { internal } from "./_generated/api";
 export interface LinearProject {
   name: string;
   id: string;
-  state: string, 
-  
-  description : string | null ;
+  state: string;
+  description: string | null;
+}
+export interface LinearIssue {
+  id: string;
+  title: string;
+  priority: number | null;
+  state: {
+    name: string;
+  };
+  project: {
+    id: string;
+    name: string;
+  } | null;
+  assignee: {
+    id: string;
+    name: string;
+    email: string;
+  } | null;
 }
 export interface Users {
-  clerkId : string , 
-  action : string ;
-  user : "admin" | "developer"
+  clerkId: string;
+  action: string;
+  user: "admin" | "developer";
 }
 
+export const getProjects = internalAction({
+  handler: async () => {
+    const res = await fetch("https://api.linear.app/graphql", {
+      method: "POST",
+      headers: {
+        Authorization: process.env.LINEAR_API_KEY!,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        query: `
+          query {
+            projects {
+              nodes {
+                id
+                name
+                description
+                state
+              }
+            }
+          }
+        `,
+      }),
+    });
 
-export const getHeaders = () => {
-  const apiKey = process.env.LINEAR_API_KEY;
-  if (!apiKey) throw new Error("LINEAR_API_KEY is not configured");
-  return {
-    "Content-Type": "application/json",
-    Authorization: apiKey,
-  };
-};
-export const linearFetch = async (
-  query: string,
-  headers: Record<string, string>,
-) => {
-  const res = await fetch("https://api.linear.app/graphql", {
-    method: "POST",
-    headers,
-    body: JSON.stringify({ query }),
-  });
-  if (!res.ok)
-    throw new Error(`Linear API error: ${res.status} ${res.statusText}`);
-  const data = await res.json();
-  if (data.errors)
-    throw new Error(`Linear GraphQL error: ${JSON.stringify(data.errors)}`);
-  return data.data;
-};
+    const data = await res.json();
+    return data.data.projects.nodes;
+  },
+});
+export const getIssues = internalAction({
+  handler: async () => {
+    const res = await fetch("https://api.linear.app/graphql", {
+      method: "POST",
+      headers: {
+        Authorization: process.env.LINEAR_API_KEY!,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        query: `
+        query { issues { nodes { id title state { name } priority project { id name } assignee { id name email } } } }`,
+      }),
+    });
+    const data = await res.json();
+    return data.data.issues.nodes;
+  },
+});
 
-export const upsertProjects = internalMutation({
-args: {
-    projects: v.array(
+export const upsertIssues = internalMutation({
+  args: {
+    issues: v.array(
       v.object({
         id: v.string(),
-        name: v.string(),
-        state: v.string(),
-        description : v.optional(v.string()) ,
+        title: v.string(),
+        priority: v.optional(v.number()),
+        state: v.object({
+          name: v.string(),
+        }),
+        project: v.union(
+          v.null(),
+          v.object({
+            id: v.string(),
+            name: v.string(),
+          }),
+        ),
+        assignee: v.union(
+          v.null(),
+          v.object({
+            email: v.string(),
+            id: v.string(),
+            name: v.string(),
+          }),
+        ),
       }),
     ),
   },
 
   handler: async (ctx, args) => {
-   await Promise.all(
-    args.projects.map(async(project) =>{
+    for (const issues of args.issues) {
+      const existing = await ctx.db
+        .query("linearIssues")
+        .withIndex("by_linearId", (q) => q.eq("id", issues.id))
+        .first();
+
+      if (existing) {
+        //update :  modify the existing record with new data
+        await ctx.db.patch(existing._id, {
+          title: issues.title,
+          priority: issues.priority,
+          state: issues.state,
+          project: issues.project,
+          assignee: issues.assignee,
+        });
+      } else {
+        //insert : if not existing then create a new record in the databaselinearAutomation/convex/linear.ts
+        await ctx.db.insert("linearIssues", {
+          id: issues.id,
+          title: issues.title,
+          priority: issues.priority,
+          state: issues.state,
+          project: issues.project,
+          assignee: issues.assignee,
+        });
+      }
+    }
+  },
+});
+export const upsertProjects = internalMutation({
+  args: {
+    projects: v.array(
+      v.object({
+        id: v.string(),
+        name: v.string(),
+        state: v.string(),
+        description: v.optional(v.string()),
+      }),
+    ),
+  },
+
+  handler: async (ctx, args) => {
+    for (const project of args.projects) {
       const existing = await ctx.db
         .query("linearProjects")
         .withIndex("by_linearId", (q) => q.eq("id", project.id))
@@ -62,74 +157,31 @@ args: {
       if (existing) {
         //update :  modify the existing record with new data
         await ctx.db.patch(existing._id, {
-        name: project.name,
-        state: project.state,
-        description : project.description, 
-        
+          name: project.name,
+          state: project.state,
+          description: project.description,
         });
       } else {
         //insert : if not existing then create a new record in the database
         await ctx.db.insert("linearProjects", {
-            id: project.id,       
-            name: project.name,   
-            state: project.state,
-            description: project.description ,
-             
-            
-            
-        }
-      )};
-    })
-  )}
-})
-
-export const getProjectforUser = query({
-  args: { id: v.string() },
-  handler: async (ctx, args) => {
-    //fething projects from convex dashboard table database
-    return await ctx.db
-      .query("linearProjects")
-      .withIndex("by_linearId", (q) => q.eq("id", args.id))
-      .first();
+          id: project.id,
+          name: project.name,
+          state: project.state,
+          description: project.description,
+        });
+      }
+    }
   },
 });
-
-export const assignProjectToUser = mutation ({
-  args :{
-    clerkId : v.string(),
-    projectId : v.string(),
-  },
-  handler : async(ctx , args ) =>{
-    const existing = await ctx.db
-        .query("assignments")
-        .withIndex("by_clerkId" , (q) => 
-        q.eq("clerkId" , args.clerkId))
-          .filter((q) =>
-            q.eq(q.field("projectId") , args.projectId))
-          .first();
-          if(!existing){
-            await ctx.db.insert("assignments" , {
-              clerkId:args.clerkId,
-              projectId: args.projectId
-            });
-          }
-      },
-    });
-
-export const logUserAction = mutation({
-  args: {
-    clerkId : v.string() , 
-    action: v.string(),
-    user: v.optional(v.union(v.literal("admin"), v.literal("developer"))),
-  },
-  handler: async (ctx, args) => {
-    // Log to a "logs" table or perform tracking
-    await ctx.db.insert("userLogs", {
-    action: args.action,
-    clerkId : args.clerkId,
-    user : args.user,
-    });
+export const syncProjects = internalAction({
+  handler: async (ctx) => {
+    const projects = await ctx.runAction(internal.linear.getProjects);
+    await ctx.runMutation(internal.linear.upsertProjects, { projects });
   },
 });
-
-
+export const syncIssues = internalAction({
+  handler: async (ctx) => {
+    const issues = await ctx.runAction(internal.linear.getIssues);
+    await ctx.runMutation(internal.linear.upsertIssues, { issues });
+  },
+});

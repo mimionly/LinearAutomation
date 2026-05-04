@@ -7,20 +7,32 @@ export default defineSchema({
     name: v.string(),
     state: v.string(),
     description: v.optional(v.string()),
-    
   })
     .index("by_linearId", ["id"])
     .index("by_state", ["state"]),
-
-  userLogs: defineTable({
-    action: v.string(),
-    clerkId: v.string(),
-    user: v.optional(v.union(v.literal("admin"), v.literal("developer"))),
-  }).index("by_clerkId", ["clerkId"]),
-  assignments: defineTable({
-    clerkId: v.string(),
-    projectId: v.string(),
+  linearIssues: defineTable({
+    id: v.string(),
+    title: v.string(),
+    priority: v.optional(v.number()),
+    state: v.object({
+      name: v.string(),
+    }),
+    project: v.union(
+      v.null(),
+      v.object({
+        id: v.string(),
+        name: v.string(),
+      }),
+    ),
+    assignee: v.union(
+      v.null(),
+      v.object({
+        email: v.string(),
+        id: v.string(),
+        name: v.string(),
+      }),
+    ),
   })
-    .index("by_clerkId", ["clerkId"])
-    .index("by_projectId", ["projectId"]),
+    .index("by_linearId", ["id"])
+    .index("by_projectId", ["project.id"]),
 });
