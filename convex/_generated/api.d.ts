@@ -9,7 +9,6 @@
  */
 
 import type * as linear from "../linear.js";
-import type * as myData from "../myData.js";
 
 import type {
   ApiFromModules,
@@ -19,7 +18,6 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   linear: typeof linear;
-  myData: typeof myData;
 }>;
 
 /**

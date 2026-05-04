@@ -1,4 +1,4 @@
-import { internalMutation, internalAction } from "./_generated/server";
+import { internalMutation, internalAction , query } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 export interface LinearProject {
@@ -24,11 +24,7 @@ export interface LinearIssue {
     email: string;
   } | null;
 }
-export interface Users {
-  clerkId: string;
-  action: string;
-  user: "admin" | "developer";
-}
+
 
 export const getProjects = internalAction({
   handler: async () => {
@@ -185,3 +181,46 @@ export const syncIssues = internalAction({
     await ctx.runMutation(internal.linear.upsertIssues, { issues });
   },
 });
+
+export const fetchProjects = query({
+  args:{
+    id : v.string(),
+    name : v.string(),
+    state: v.string(),
+    description :v.optional(v.string()),
+  },
+  handler: async(ctx )=>{
+    const projects = await ctx.db.query("linearProjects").collect();
+    return projects;
+  }
+  },
+);
+export const fetchIssues = query({
+  args:{
+      id : v.string(), 
+    title: v.string(),
+    priority: v.optional(v.number()),
+    state: v.object({
+      name: v.string(),
+    }),
+    project: v.union(
+      v.null(),
+      v.object({
+        id: v.string(),
+        name: v.string(),
+      }),
+),
+    assignee: v.union(
+      v.null(),
+      v.object({
+        email: v.string(),
+        id: v.string(),
+        name: v.string(),
+      }),
+    ),
+  },
+  handler: async(ctx )=>{
+    const issues = await ctx.db.query("linearIssues").collect();
+    return issues;
+  }
+})
