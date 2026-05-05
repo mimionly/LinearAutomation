@@ -184,10 +184,7 @@ export const syncIssues = internalAction({
 
 export const fetchProjects = query({
   args:{
-    id : v.string(),
-    name : v.string(),
-    state: v.string(),
-    description :v.optional(v.string()),
+    
   },
   handler: async(ctx )=>{
     const projects = await ctx.db.query("linearProjects").collect();
@@ -197,30 +194,20 @@ export const fetchProjects = query({
 );
 export const fetchIssues = query({
   args:{
-      id : v.string(), 
-    title: v.string(),
-    priority: v.optional(v.number()),
-    state: v.object({
-      name: v.string(),
-    }),
-    project: v.union(
-      v.null(),
-      v.object({
-        id: v.string(),
-        name: v.string(),
-      }),
-),
-    assignee: v.union(
-      v.null(),
-      v.object({
-        email: v.string(),
-        id: v.string(),
-        name: v.string(),
-      }),
-    ),
   },
   handler: async(ctx )=>{
     const issues = await ctx.db.query("linearIssues").collect();
     return issues;
   }
 })
+export const fetchCounts = query({
+  args :{} ,
+  handler: async(ctx) =>{
+    const projects= await ctx.db.query("linearProjects").collect();
+    const issues = await ctx.db.query("linearIssues").collect();
+    return {
+      totalProjects : projects.length,
+      totalIssues : issues.length,
+    };
+  },
+});
