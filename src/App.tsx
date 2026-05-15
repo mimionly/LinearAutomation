@@ -1,11 +1,36 @@
 import { useUser, AuthenticateWithRedirectCallback } from "@clerk/clerk-react"
-import { BrowserRouter, Routes, Route } from "react-router-dom"
+import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom"
 import { Loader2 } from "lucide-react"
 import SignIn from "@/components/SignIn"       
-import Page from "./dashboard/page"            
+import Dashboard from "./dashboard/Dashboard"            
 import { useEffect } from "react"
 import { useMutation } from "convex/react"
 import { api } from "../convex/_generated/api"
+import * as React from "react"
+import {
+  SidebarInset,
+  SidebarProvider,
+} from "@/components/ui/sidebar"
+import { SettingsSidebar } from "@/components/ui/settings-sidebar"
+
+/* Settings pages use a dedicated sidebar layout */
+function SettingsLayout() {
+  return (
+    <SidebarProvider
+      style={
+        {
+          "--sidebar-width": "calc(var(--spacing) * 48)",
+          "--header-height": "calc(var(--spacing) * 12)",
+        } as React.CSSProperties
+      }
+    >
+      <SettingsSidebar variant="inset" />
+      <SidebarInset>
+        <Outlet />
+      </SidebarInset>
+    </SidebarProvider>
+  )
+}
 
 export default function App() {
   const { user, isSignedIn, isLoaded } = useUser()
@@ -16,7 +41,7 @@ export default function App() {
     if (isSignedIn && user?.id ) {
       const alreadyLogged = localStorage.getItem("hasLoggedLogin");
       if (!alreadyLogged) {
-        logAction({ _id: user.id, action: "login" }).catch(console.error);
+        logAction({ clerkId: user.id, action: "login" }).catch(console.error);
         localStorage.setItem("hasLoggedLogin", "true");
       }
     }
@@ -34,7 +59,19 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         {isSignedIn ? (
-          <Route path="/*" element={<Page />} />         
+          <>
+            {/* Settings pages — dedicated sidebar */}
+            <Route path="/settings" element={<SettingsLayout />}>
+              <Route path="profile"  />
+              <Route path="preferences"  />
+              <Route path="teams"  />
+              <Route path="members"  />
+              <Route path="squads"  />
+            </Route>
+
+            {/* Main dashboard — catch-all */}
+            <Route path="/*" element={<Dashboard />} />
+          </>
         ) : (
           <>
             <Route path="/sso-callback" element={<AuthenticateWithRedirectCallback />} />

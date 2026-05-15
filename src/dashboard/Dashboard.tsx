@@ -6,16 +6,17 @@ import {
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
 import { DataTable } from "@/components/data-table"
+import * as React from "react";
 
 import { ChartAreaInteractive } from "@/components/chart-area";
 
 
-export default function Page() {
+export default function DashBoard() {
   return (
     <SidebarProvider
       style={
         {
-          "--sidebar-width": "calc(var(--spacing) * 60)",
+          "--sidebar-width": "calc(var(--spacing) * 50)",
           "--header-height": "calc(var(--spacing) * 12)",
         } as React.CSSProperties
       }

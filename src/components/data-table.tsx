@@ -1,4 +1,6 @@
 import * as React from "react"
+import { useQuery, useAction } from "convex/react"
+import { api } from "../../convex/_generated/api"
 import {
   closestCenter,
   DndContext,
@@ -18,20 +20,22 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
+import { Label } from "@/components/ui/label"
 import {
   IconChevronDown,
-  IconChevronLeft,
-  IconChevronRight,
-  IconChevronsLeft,
-  IconChevronsRight,
   IconCircleCheckFilled,
-
-
+  IconCircleDashed,
+  IconCircleX,
+  IconCalendar,
   IconLayoutColumns,
-  IconLoader,
- 
-  
+  IconAlertCircle,
+  IconArrowUp,
+  IconArrowDown,
+  IconMinus,
+  IconUser,
+  IconRefresh,
 } from "@tabler/icons-react"
+import { Loader, LoaderCircle } from "lucide-react";
 import {
   flexRender,
   getCoreRowModel,
@@ -47,26 +51,21 @@ import {
   type SortingState,
   type VisibilityState,
 } from "@tanstack/react-table"
-import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
-import { toast } from "sonner"
+
+
 import { z } from "zod"
 
 import { useIsMobile } from "@/hooks/use-mobile"
-import { Badge } from "@/components/ui/badge"
+
 import { Button } from "@/components/ui/button"
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-  type ChartConfig,
-} from "@/components/ui/chart"
+
 
 import {
   Drawer,
- 
+
   DrawerContent,
   DrawerDescription,
- 
+
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
@@ -78,15 +77,9 @@ import {
 
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+
+
+
 import { Separator } from "@/components/ui/separator"
 import {
   Table,
@@ -99,100 +92,128 @@ import {
 import {
   Tabs,
   TabsContent,
- 
+
 } from "@/components/ui/tabs"
 
-export const schema = z.object({
-  id: z.number(),
-  header: z.string(),
-  type: z.string(),
-  status: z.string(),
-  target: z.string(),
-  "Team Member": z.string(),
-  reviewer: z.string(),
-})
+import { schema } from "@/lib/schema"
 
-
-function createColumns(
-  setData: React.Dispatch<React.SetStateAction<z.infer<typeof schema>[]>>
-): ColumnDef<z.infer<typeof schema>>[] {
-  const onUpdate = (id: number, field: keyof z.infer<typeof schema>, value: string) => {
-    setData((prev) =>
-      prev.map((row) => (row.id === id ? { ...row, [field]: value } : row))
-    )
-  }
-
+function createColumns(): ColumnDef<z.infer<typeof schema>>[] {
   return [
     {
       accessorKey: "header",
       header: "Project Name",
       cell: ({ row }) => {
-        return <TableCellViewer item={row.original} onUpdate={onUpdate} />
+        return <TableCellViewer item={row.original} />
       },
       enableHiding: false,
     },
     {
-      accessorKey: "type",
-      header: "Projects Type",
+      accessorKey: "description",
+      header: "Description",
       cell: ({ row }) => (
-        <div className="w-32">
-          <Badge variant="outline" className="px-1.5 text-muted-foreground">
-            {row.original.type}
-          </Badge>
+        <div className="max-w-[300px] truncate text-muted-foreground" title={row.original.description}>
+          {row.original.description}
         </div>
       ),
     },
     {
+      accessorKey: "progress",
+      header: "Progress",
+      cell: ({ row }) => {
+        const val = row.original.progress; // 0–1 float from Linear
+        const pct = Math.round(val * 100);
+        return (
+          <div className="flex items-center gap-2" title={`${pct}%`}>
+            <div className="h-1.5 w-20 rounded-full bg-muted overflow-hidden">
+              <div
+                className="h-full rounded-full bg-foreground"
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+            <span className="text-xs text-muted-foreground w-8">{pct}%</span>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "health",
+      header: "Health",
+      cell: ({ row }) => {
+        const h = row.original.health;
+        const healthMap: Record<string, string> = {
+          onTrack: "On Track",
+          atRisk: "At Risk",
+          offTrack: "Off Track",
+          noData: "No Data",
+        };
+        const label = healthMap[h] ?? (h || null);
+        if (!label) return <span className="text-xs text-muted-foreground">—</span>;
+        return (
+          <span className="text-xs text-muted-foreground">{label}</span>
+        );
+      },
+    },
+    {
+      accessorKey: "leadName",
+      header: "Lead",
+      cell: ({ row }) => {
+        const name = row.original.leadName;
+        const email = row.original.leadEmail;
+        if (!name) return <span className="text-muted-foreground text-xs">—</span>;
+        return (
+          <span
+            className="inline-flex items-center gap-1 text-xs text-foreground"
+            title={email}
+          >
+            <IconUser size={13} className="text-muted-foreground" />
+            {name}
+          </span>
+        );
+      },
+    },
+    {
       accessorKey: "status",
       header: "Status",
-      cell: ({ row }) => (
-        <Badge variant="outline" className="px-1.5 text-muted-foreground">
-          {row.original.status === "Done" ? (
-            <IconCircleCheckFilled className="fill-green-500 dark:fill-green-400" />
-          ) : (
-            <IconLoader />
-          )}
-          {row.original.status}
-        </Badge>
-      ),
-    },
-    {
-      accessorKey: "Team Members",
-      header: () => <div className="w-full text-right">Team Members</div>,
-      cell: ({ row }) => (
-        <form
-          onSubmit={(e) => {
-            e.preventDefault()
-            toast.promise(new Promise((resolve) => setTimeout(resolve, 1000)), {
-              loading: `Saving ${row.original.header}`,
-              success: "Done",
-              error: "Error",
-            })
-          }}
-        >
-
-        </form>
-      ),
-    },
-
-    {
-      accessorKey: "reviewer",
-      header: "Reviewer",
       cell: ({ row }) => {
-        const isAssigned = row.original.reviewer !== "Assign reviewer"
-
-        if (isAssigned) {
-          return row.original.reviewer
-        }
-
+        const s = row.original.status?.toLowerCase() ?? "";
+        const statusConfig: Record<string, { icon: React.ReactNode; color: string; label: string }> = {
+          backlog: { icon: <IconCircleDashed size={14} />, color: "text-muted-foreground", label: "Backlog" },
+          planned: { icon: <IconCalendar size={14} />, color: "text-muted-foreground", label: "Planned" },
+          "in-progress": { icon: <LoaderCircle size={14} />, color: "text-foreground", label: "In Progress" },
+          started: { icon: <Loader size={14} />, color: "text-foreground", label: "Started" },
+          completed: { icon: <IconCircleCheckFilled size={14} />, color: "text-foreground", label: "Completed" },
+          canceled: { icon: <IconCircleX size={14} />, color: "text-muted-foreground", label: "Canceled" },
+        };
+        const cfg = statusConfig[s] ?? { icon: <IconCircleDashed size={14} />, color: "text-slate-400", label: row.original.status };
         return (
-          <>
-            <Label htmlFor={`${row.original.id}-reviewer`} className="sr-only">
-              Reviewer
-            </Label>
+          <span className={`inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-0.5 text-xs font-medium ${cfg.color}`}>
+            {cfg.icon}
+            {cfg.label}
+          </span>
+        );
+      },
+    },
 
-          </>
-        )
+
+    {
+      accessorKey: "priority",
+      header: "Priority",
+      cell: ({ row }) => {
+        const p = row.original.priority;
+        const priorityConfig: Record<number, { icon: React.ReactNode; label: string; color: string }> = {
+          0: { icon: <IconCircleDashed size={14} />, label: "None", color: "text-muted-foreground" },
+          1: { icon: <IconAlertCircle size={14} />, label: "Urgent", color: "text-foreground" },
+          2: { icon: <IconArrowUp size={14} />, label: "High", color: "text-foreground" },
+          3: { icon: <IconMinus size={14} />, label: "Medium", color: "text-foreground" },
+          4: { icon: <IconArrowDown size={14} />, label: "Low", color: "text-muted-foreground" },
+        };
+        const cfg = priorityConfig[p] ?? priorityConfig[0];
+        return (
+          <span className={`inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-0.5 text-xs font-medium ${cfg.color}`}>
+            {cfg.icon}
+            {cfg.label}
+          </span>
+        );
       },
     },
     {
@@ -206,7 +227,7 @@ function createColumns(
 
 function DraggableRow({ row }: { row: Row<z.infer<typeof schema>> }) {
   const { transform, transition, setNodeRef, isDragging } = useSortable({
-    id: row.original.id,              
+    id: row.original.id,
   })
 
   return (
@@ -217,7 +238,7 @@ function DraggableRow({ row }: { row: Row<z.infer<typeof schema>> }) {
       className="relative z-0 data-[dragging=true]:z-10 data-[dragging=true]:opacity-80"
       style={{
         transform: CSS.Transform.toString(transform),
-        transition: transition,    
+        transition: transition,
       }}
     >
       {row.getVisibleCells().map((cell) => (
@@ -230,13 +251,49 @@ function DraggableRow({ row }: { row: Row<z.infer<typeof schema>> }) {
 }
 
 
-export function DataTable({
-  data: initialData,
-}: {
-  data: z.infer<typeof schema>[]
-}) {
-  const [data, setData] = React.useState(() => initialData)
-  const columns = React.useMemo(() => createColumns(setData), [setData])
+export function DataTable() {
+  const rawProjects = useQuery(api.linear.fetchProjects)
+  const syncNow = useAction(api.linear.triggerSync)
+  const [syncing, setSyncing] = React.useState(false)
+
+  async function handleSync() {
+    setSyncing(true)
+    try {
+      await syncNow({})
+    } finally {
+      setSyncing(false)
+    }
+  }
+
+  // Map Convex projects → schema shape
+  const initialData = React.useMemo((): z.infer<typeof schema>[] => {
+    if (!rawProjects) return []
+    return rawProjects.map((project, index) => ({
+      id: index + 1,
+      linearId: project.id,
+      header: project.name ?? "Untitled",
+      description: project.description ?? "No description",
+      type: project.state ?? "No State",
+      status: project.state ?? "Unknown",
+      target: project.name ?? "—",
+      priority: project.priority ?? 0,
+      createdAt: project.createdAt ?? "",
+      progress: project.progress ?? 0,
+      health: project.health ?? "",
+      content: project.content,
+      leadName: project.lead?.name ?? undefined,
+      leadEmail: project.lead?.email ?? undefined,
+    }))
+  }, [rawProjects])
+
+  const [data, setData] = React.useState<z.infer<typeof schema>[]>(() => initialData)
+
+  // Sync state whenever Convex returns fresh data
+  React.useEffect(() => {
+    setData(initialData)
+  }, [initialData])
+
+  const columns = React.useMemo(() => createColumns(), [])
   const [rowSelection, setRowSelection] = React.useState({})
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({})
@@ -302,12 +359,19 @@ export function DataTable({
       className="w-full flex-col justify-start gap-6"
     >
       <div className="flex items-center justify-between px-4 lg:px-6">
-        <Label htmlFor="view-selector" className="sr-only">
-          View
-        </Label>
 
-        
+
+
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleSync}
+            disabled={syncing}
+          >
+            <IconRefresh className={syncing ? "animate-spin" : ""} />
+            <span className="hidden lg:inline">{syncing ? "Syncing…" : "Sync Now"}</span>
+          </Button>
           <DropdownMenu>
             <DropdownMenuTrigger>
               <Button variant="outline" size="sm">
@@ -341,7 +405,7 @@ export function DataTable({
                 })}
             </DropdownMenuContent>
           </DropdownMenu>
-         
+
         </div>
       </div>
       <TabsContent
@@ -365,7 +429,7 @@ export function DataTable({
                         <TableHead key={header.id} colSpan={header.colSpan}>
                           {header.isPlaceholder
                             ? null
-                            : flexRender( 
+                            : flexRender(
                               header.column.columnDef.header,
                               header.getContext()
                             )}
@@ -383,7 +447,7 @@ export function DataTable({
                   >
                     {table.getRowModel().rows.map((row) => (
                       <DraggableRow key={row.id} row={row} />
-                    ))}   
+                    ))}
                   </SortableContext>
                 ) : (
                   <TableRow>
@@ -399,83 +463,7 @@ export function DataTable({
             </Table>
           </DndContext>
         </div>
-        <div className="flex items-center justify-between px-4">
-          <div className="hidden flex-1 text-sm text-muted-foreground lg:flex">
-            {table.getFilteredSelectedRowModel().rows.length} of{" "}
-            {table.getFilteredRowModel().rows.length} row(s) selected.
-          </div> 
-          <div className="flex w-full items-center gap-8 lg:w-fit">
-            <div className="hidden items-center gap-2 lg:flex">
-              <Label htmlFor="rows-per-page" className="text-sm font-medium">
-                Rows per page
-              </Label>
-              <Select
-                value={`${table.getState().pagination.pageSize}`}
-                onValueChange={(value) => {
-                  table.setPageSize(Number(value))
-                }}
-              >
-                <SelectTrigger size="sm" className="w-20" id="rows-per-page">
-                  <SelectValue
-                    placeholder={table.getState().pagination.pageSize} 
-                  />
-                </SelectTrigger>
-                <SelectContent side="top">
-                  {[10, 20, 30, 40, 50].map((pageSize) => (
-                    <SelectItem key={pageSize} value={`${pageSize}`}>
-                      {pageSize}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex w-fit items-center justify-center text-sm font-medium">
-              Page {table.getState().pagination.pageIndex + 1} of{" "}
-              {table.getPageCount()}
-            </div>
-            <div className="ml-auto flex items-center gap-2 lg:ml-0">
-              <Button
-                variant="outline"
-                className="hidden h-8 w-8 p-0 lg:flex"
-                onClick={() => table.setPageIndex(0)}
-                disabled={!table.getCanPreviousPage()}
-              >
-                <span className="sr-only">Go to first page</span>
-                <IconChevronsLeft />
-              </Button>
-              <Button
-                variant="outline"
-                className="size-8"
-                size="icon"
-                onClick={() => table.previousPage()}
-                disabled={!table.getCanPreviousPage()}
-              >
-                <span className="sr-only">Go to previous page</span>
-                <IconChevronLeft />
-              </Button>
-              <Button
-                variant="outline"
-                className="size-8"
-                size="icon"
-                onClick={() => table.nextPage()}
-                disabled={!table.getCanNextPage()}
-              >
-                <span className="sr-only">Go to next page</span>
-                <IconChevronRight />
-              </Button>
-              <Button
-                variant="outline"
-                className="hidden size-8 lg:flex"
-                size="icon"
-                onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-                disabled={!table.getCanNextPage()}
-              >
-                <span className="sr-only">Go to last page</span>
-                <IconChevronsRight />
-              </Button>
-            </div>
-          </div>
-        </div>
+
       </TabsContent>
       <TabsContent
         value="past-performance"
@@ -496,28 +484,82 @@ export function DataTable({
   )
 }
 
-const chartData = [
-]
+function ProjectIssuesTable({ projectId }: { projectId: string }) {
+  const issues = useQuery(api.linear.fetchIssuesByProject, { projectId })
 
-const chartConfig = {
-  Projects: {
-    label: "Projects",
-    color: "var(--primary)",
-  },
-  Issues: {
-    label: "Issues",
-    color: "var(--primary)",
-  },
-} satisfies ChartConfig
+  if (issues === undefined) {
+    return (
+      <div className="flex items-center justify-center py-6">
+        <Loader className="h-4 w-4 animate-spin text-muted-foreground" />
+        <span className="ml-2 text-xs text-muted-foreground">Loading issues…</span>
+      </div>
+    )
+  }
+
+  if (issues.length === 0) {
+    return (
+      <div className="rounded-md border border-dashed p-4 text-center text-xs text-muted-foreground">
+        No issues found for this project.
+      </div>
+    )
+  }
+
+  const priorityLabel = (p: number | undefined) => {
+    const map: Record<number, string> = { 0: "None", 1: "Urgent", 2: "High", 3: "Medium", 4: "Low" }
+    return map[p ?? 0] ?? "None"
+  }
+
+  return (
+    <div className="overflow-hidden rounded-md border">
+      <Table>
+        <TableHeader>
+          <TableRow className="bg-muted/50">
+            <TableHead className="text-xs">Issue</TableHead>
+            <TableHead className="text-xs">Status</TableHead>
+            <TableHead className="text-xs">Priority</TableHead>
+            <TableHead className="text-xs">Assignee</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {issues.map((issue) => (
+            <TableRow key={issue._id}>
+              <TableCell className="text-xs font-medium">{issue.title}</TableCell>
+              <TableCell>
+                <span className="inline-flex items-center rounded-md border border-border px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground">
+                  {issue.state?.name ?? "—"}
+                </span>
+              </TableCell>
+              <TableCell className="text-xs text-muted-foreground">
+                {priorityLabel(issue.priority)}
+              </TableCell>
+              <TableCell className="text-xs text-muted-foreground">
+                {issue.assignee?.name ?? "Unassigned"}
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  )
+}
 
 function TableCellViewer({
   item,
-  onUpdate,
 }: {
   item: z.infer<typeof schema>
-  onUpdate: (id: number, field: keyof z.infer<typeof schema>, value: string) => void
 }) {
   const isMobile = useIsMobile()
+
+  const healthMap: Record<string, { label: string; color: string }> = {
+    onTrack: { label: "On Track", color: "text-emerald-500" },
+    atRisk: { label: "At Risk", color: "text-amber-500" },
+    offTrack: { label: "Off Track", color: "text-red-500" },
+    noData: { label: "No Data", color: "text-muted-foreground" },
+  }
+  const healthCfg = healthMap[item.health] ?? { label: item.health || "—", color: "text-muted-foreground" }
+
+  const priorityMap: Record<number, string> = { 0: "None", 1: "Urgent", 2: "High", 3: "Medium", 4: "Low" }
+  const pct = Math.round((item.progress ?? 0) * 100)
 
   return (
     <Drawer direction={isMobile ? "bottom" : "right"}>
@@ -530,116 +572,75 @@ function TableCellViewer({
         <DrawerHeader className="gap-1">
           <DrawerTitle>{item.header}</DrawerTitle>
           <DrawerDescription>
-            Showing total visitors for the last 6 months
+            Project details and associated issues from Linear
           </DrawerDescription>
         </DrawerHeader>
-        <div className="flex flex-col gap-4 overflow-y-auto px-4 text-sm">
-          {!isMobile && (
-            <>
-              <ChartContainer config={chartConfig}>
-                <AreaChart
-                  accessibilityLayer
-                  data={chartData}
-                  margin={{
-                    left: 0,
-                    right: 10,
-                  }}
-                >
-                  <CartesianGrid vertical={false} />
-                  <XAxis
-                    dataKey="month"
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={8}
-                    tickFormatter={(value) => value.slice(0, 3)}
-                    hide
-                  />
-                  <ChartTooltip
-                    cursor={false}
-                    content={<ChartTooltipContent indicator="dot" />}
-                  />
-                  <Area
-                    dataKey="Projects"
-                    type="natural"
-                    fill="var(--color-projects)"
-                    fillOpacity={0.6}
-                    stroke="var(--color-projects)"
-                    stackId="a"
-                  />
-                  <Area
-                    dataKey="Issues"
-                    type="natural"
-                    fill="var(--color-issues)"
-                    fillOpacity={0.4}
-                    stroke="var(--color-issues)"
-                    stackId="a"
-                  />
-                </AreaChart>
-              </ChartContainer>
-              <Separator />
-              <div className="grid gap-2">
-               
-              
+        <div className="flex flex-col gap-4 overflow-y-auto px-4 pb-6 text-sm">
+          {/* ── Project metadata ── */}
+          <div className="flex flex-col gap-1.5">
+            <Label className="text-muted-foreground">Description</Label>
+            <div className="font-medium leading-relaxed">{item.description || "—"}</div>
+          </div>
+
+          <Separator />
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-muted-foreground">Status</Label>
+              <div className="font-medium">{item.status}</div>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-muted-foreground">Priority</Label>
+              <div className="font-medium">{priorityMap[item.priority] ?? item.priority}</div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-muted-foreground">Health</Label>
+              <div className={`font-medium ${healthCfg.color}`}>{healthCfg.label}</div>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-muted-foreground">Progress</Label>
+              <div className="flex items-center gap-2">
+                <div className="h-1.5 w-20 rounded-full bg-muted overflow-hidden">
+                  <div className="h-full rounded-full bg-foreground" style={{ width: `${pct}%` }} />
+                </div>
+                <span className="text-xs text-muted-foreground">{pct}%</span>
               </div>
+            </div>
+          </div>
+
+          {(item.leadName || item.leadEmail) && (
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-muted-foreground">Lead</Label>
+              <div className="inline-flex items-center gap-1 font-medium">
+                <IconUser size={14} className="text-muted-foreground" />
+                {item.leadName}{item.leadEmail ? ` (${item.leadEmail})` : ""}
+              </div>
+            </div>
+          )}
+
+          {/* ── Content from API ── */}
+          {item.content && (
+            <>
               <Separator />
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-muted-foreground">Content</Label>
+                <div className="max-h-48 overflow-y-auto rounded-md border bg-muted/30 p-3 text-xs leading-relaxed whitespace-pre-wrap">
+                  {item.content}
+                </div>
+              </div>
             </>
           )}
-          <form className="flex flex-col gap-4">
-            <div className="flex flex-col gap-3">
-              <Label htmlFor="header">Header</Label>
-              <Input id="header" defaultValue={item.header} />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-3">
-                <Label htmlFor="type">Type</Label>
-                
-              </div>
-              <div className="flex flex-col gap-3">
-                <Label htmlFor="status">Status</Label>
-                <Select
-                  value={item.status}
-                  onValueChange={(value) => onUpdate(item.id, "status", value || " ")}
-                >
-                  <SelectTrigger id="status" className="w-full">
-                    <SelectValue placeholder="Select a status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="In Progress">In Progress</SelectItem>
-                    <SelectItem value="Started">Started</SelectItem>
-                    <SelectItem value="Not Started">Not Started</SelectItem>
-                    <SelectItem value="Done">Done</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-3">
-                <Label htmlFor="target">Target</Label>
-                <Input id="target" defaultValue={item.target} />
-              </div>
-              <div className="flex flex-col gap-3">
-                <Label htmlFor="Team Member">Team Member</Label>
-                <Input id="Team Member" defaultValue={item["Team Member"]} />
-              </div>
-            </div>
-            <div className="flex flex-col gap-3">
-              <Label htmlFor="reviewer">Reviewer</Label>
-              <Select defaultValue={item.reviewer}>
-                <SelectTrigger id="reviewer" className="w-full">
-                  <SelectValue placeholder="Select a reviewer" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Eddie Lake">Aneesh Bhat</SelectItem>
-                  <SelectItem value="Aneesh Bhat">
-                    Aneesh Bhat
-                  </SelectItem>
-                  <SelectItem value="Aneesh Bhat">Aneesh Bhat</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </form>
+
+          {/* ── Project issues sub-table ── */}
+          <Separator />
+          <div className="flex flex-col gap-1.5">
+            <Label className="text-muted-foreground">Issues</Label>
+            <ProjectIssuesTable projectId={item.linearId} />
+          </div>
         </div>
-       
       </DrawerContent>
     </Drawer>
   )

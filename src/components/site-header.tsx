@@ -15,11 +15,11 @@ export function SiteHeader() {
         <div className="ml-auto flex items-center gap-2">
           <Button variant="ghost" size="sm" className="hidden sm:flex">
             <a
-              href="https://github.com/mimionly" rel ="noopener noreferrer"
+              href="https://linear.app/mimiworks/" rel ="noopener noreferrer"
               target="_blank"
               className="dark:text-foreground"
             >
-              GitHub
+              Linear Developer
             </a>
           </Button>
         </div>
