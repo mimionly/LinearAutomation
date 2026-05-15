@@ -1,16 +1,10 @@
 import * as React from "react";
 import {
-  IconCamera,
-  IconDashboard,
-  IconFileAi,
-  IconFileDescription,
-  IconFolder,
-  IconUsers,
-} from "@tabler/icons-react";
-
-import { NavMain } from "@/components/nav-main";
-
-
+  LogOutIcon,
+  SettingsIcon,
+  UserPlusIcon,
+  ChevronDownIcon,
+} from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -20,103 +14,59 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-
-const data = {
-  navMain: [
-    {
-      title: "Dashboard",
-      url: "/",
-      icon: IconDashboard,
-    },
-
-    {
-      title: "Projects",
-      url: "/projects",
-      icon: IconFolder,
-    },
-    {
-      title: "Team",
-      url: "/team",
-      icon: IconUsers,
-    },
-  ],
-  navClouds: [
-    {
-      title: "Capture",
-      icon: IconCamera,
-      isActive: true,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Proposal",
-      icon: IconFileDescription,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Prompts",
-      icon: IconFileAi,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-  ],
-};
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useNavigate } from "react-router-dom";
 
 
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  
- 
-
+  const navigate = useNavigate();
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton
-              className="data-[slot=sidebar-menu-button]:p-1.5!"
-              render={<a href="/linearAutomation/src/dashboard/" />}
-            >
-              <img src="/devVoid.jpeg" alt="DevVoid" className="size-9!" />
-              <span className="text-base font-semibold">DevVoid</span>
-            </SidebarMenuButton>
+            <DropdownMenu>
+              <DropdownMenuTrigger >
+                <SidebarMenuButton className="p-1.5 w-full">
+                  <img src="/devVoid.jpeg" alt="DevVoid" className="size-9 rounded-md" />
+                  <span className="text-base font-semibold">DevVoid</span>
+                  <ChevronDownIcon className="ml-auto size-4 opacity-50" />
+                </SidebarMenuButton>
+              </DropdownMenuTrigger>
+
+              <DropdownMenuContent side="bottom" align="start" className="w-52">
+                <DropdownMenuItem onClick={() => navigate("/settings")}>
+                  <SettingsIcon className="size-4" />
+                  Settings
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/invite")}>
+                  <UserPlusIcon className="size-4" />
+                  Invite And Manage Members
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  variant="destructive"
+                  onClick={() => navigate("/logout")}
+                >
+                  <LogOutIcon className="size-4" />
+                  Log out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
-      <SidebarContent>
-        <NavMain items={data.navMain} />
-      </SidebarContent>
-      <SidebarFooter>
-        
-      </SidebarFooter>
+
+      <SidebarContent />
+
+      <SidebarFooter />
     </Sidebar>
   );
 }
