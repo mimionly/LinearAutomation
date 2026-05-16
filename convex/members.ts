@@ -1,4 +1,4 @@
-import { internalAction } from "./_generated/server";
+import {  internalMutation } from "./_generated/server";
 
 type Member = {
   name: string;
@@ -18,7 +18,7 @@ type Team = {
   };
 };
 
-export const getmembers = internalAction({
+export const getmembers = internalMutation({
   handler: async () => {
     const res = await fetch(
       "https://api.linear.app/graphql",

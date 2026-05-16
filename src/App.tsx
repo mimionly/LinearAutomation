@@ -1,8 +1,8 @@
 import { useUser, AuthenticateWithRedirectCallback } from "@clerk/clerk-react"
 import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom"
 import { Loader2 } from "lucide-react"
-import SignIn from "@/components/SignIn"       
-import Dashboard from "./dashboard/Dashboard"            
+import SignIn from "@/components/SignIn"
+import Dashboard from "./dashboard/Dashboard"
 import { useEffect } from "react"
 import { useMutation } from "convex/react"
 import { api } from "../convex/_generated/api"
@@ -35,10 +35,10 @@ function SettingsLayout() {
 export default function App() {
   const { user, isSignedIn, isLoaded } = useUser()
   const logAction = useMutation(api.linear.logUserAction)
-  
+
 
   useEffect(() => {
-    if (isSignedIn && user?.id ) {
+    if (isSignedIn && user?.id) {
       const alreadyLogged = localStorage.getItem("hasLoggedLogin");
       if (!alreadyLogged) {
         logAction({ clerkId: user.id, action: "login" }).catch(console.error);
@@ -62,11 +62,11 @@ export default function App() {
           <>
             {/* Settings pages — dedicated sidebar */}
             <Route path="/settings" element={<SettingsLayout />}>
-              <Route path="profile"  />
-              <Route path="preferences"  />
-              <Route path="teams"  />
-              <Route path="members"  />
-              <Route path="squads"  />
+              <Route path="profile" />
+              <Route path="preferences" />
+              <Route path="teams" />
+              <Route path="members" />
+              <Route path="squads" />
             </Route>
 
             {/* Main dashboard — catch-all */}
@@ -75,7 +75,7 @@ export default function App() {
         ) : (
           <>
             <Route path="/sso-callback" element={<AuthenticateWithRedirectCallback />} />
-            <Route path="*" element={<SignIn />} />     
+            <Route path="*" element={<SignIn />} />
           </>
         )}
       </Routes>

@@ -1,6 +1,5 @@
-import { internalMutation, internalAction, query, mutation, action } from "./_generated/server";
+import { internalMutation, query, mutation } from "./_generated/server";
 import { v } from "convex/values";
-import { internal } from "./_generated/api";
 export interface LinearProject {
   name: string;
   id: string;
@@ -15,8 +14,6 @@ export interface LinearProject {
     name: string;
     email: string;
   }
-
-
 }
 export interface LinearIssue {
   id: string;
@@ -37,60 +34,6 @@ export interface LinearIssue {
 }
 
 
-export const getProjects = internalAction({
-  handler: async () => {
-    const res = await fetch("https://api.linear.app/graphql", {
-      method: "POST",
-      headers: {
-        Authorization: process.env.LINEAR_API_KEY!,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        query: `
-          query {
-            projects {
-              nodes {
-                id
-                name
-                description
-                state
-                priority
-                createdAt
-                health 
-                progress 
-                content
-                lead {
-                  name
-                  email
-                }
-              }
-            }
-          }
-        `,
-      }),
-    });
-
-    const data = await res.json();
-    return data.data.projects.nodes;
-  },
-});
-export const getIssues = internalAction({
-  handler: async () => {
-    const res = await fetch("https://api.linear.app/graphql", {
-      method: "POST",
-      headers: {
-        Authorization: process.env.LINEAR_API_KEY!,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        query: `
-        query { issues { nodes { id title state { name } priority createdAt project { id name } assignee { id name email } } } }`,
-      }),
-    });
-    const data = await res.json();
-    return data.data.issues.nodes;
-  },
-});
 
 export const upsertIssues = internalMutation({
   args: {
@@ -98,7 +41,7 @@ export const upsertIssues = internalMutation({
       v.object({
         id: v.string(),
         title: v.string(),
-        priority: v.optional(v.number()),
+        priority: v.optional(v.float64()),
         state: v.object({
         name: v.string(),
 
@@ -186,7 +129,6 @@ export const upsertProjects = internalMutation({
         .first();
 
       const badgeStatus = mapLinearStatus(project.state);
-      // Coerce null → undefined so v.optional fields in the DB schema are satisfied
       const priority = project.priority ?? undefined;
       const health   = project.health   ?? undefined;
       const progress = project.progress ?? undefined;
@@ -224,33 +166,13 @@ export const upsertProjects = internalMutation({
     }
   },
 });
-export const syncProjects = internalAction({
-  handler: async (ctx) => {
-    const projects = await ctx.runAction(internal.linear.getProjects);
-    await ctx.runMutation(internal.linear.upsertProjects, { projects });
-  },
-});
-export const syncIssues = internalAction({
-  handler: async (ctx) => {
-    const issues = await ctx.runAction(internal.linear.getIssues);
-    await ctx.runMutation(internal.linear.upsertIssues, { issues });
-  },
-});
 
-// Public action — call this to force-refresh DB data from the Linear API
-export const triggerSync = action({
-  args: {},
-  handler: async (ctx) => {
-    await ctx.runAction(internal.linear.syncProjects);
-    await ctx.runAction(internal.linear.syncIssues);
-    return { success: true };
-  },
-});
+
+
+
 
 export const fetchProjects = query({
-  args: {
-
-  },
+  
   handler: async (ctx) => {
     const projects = await ctx.db.query("linearProjects").collect();
     return projects;
@@ -258,8 +180,7 @@ export const fetchProjects = query({
 },
 );
 export const fetchIssues = query({
-  args: {
-  },
+  
   handler: async (ctx) => {
     const issues = await ctx.db.query("linearIssues").collect();
     return issues;

@@ -1,10 +1,11 @@
-import { useQuery } from "convex/react";
-import { api } from "../../convex/_generated/api"
+import { rawProjects, rawIssues } from "@/data/mock-data"
 
+/** Returns static mock project data (same shape as the old Convex query). */
 export function useProjects() {
-  return useQuery(api.linear.fetchProjects);
+  return rawProjects
 }
 
+/** Returns static mock issue data (same shape as the old Convex query). */
 export function useIssues() {
-  return useQuery(api.linear.fetchIssues);
+  return rawIssues
 }

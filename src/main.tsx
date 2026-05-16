@@ -13,7 +13,7 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ClerkProvider  publishableKey={clerkPubKey} >
       <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
-        <App />
+    <App />
       </ConvexProviderWithClerk >
     </ClerkProvider>
   </StrictMode>,

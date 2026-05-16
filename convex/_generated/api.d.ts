@@ -9,6 +9,7 @@
  */
 
 import type * as linear from "../linear.js";
+import type * as members from "../members.js";
 
 import type {
   ApiFromModules,
@@ -18,6 +19,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   linear: typeof linear;
+  members: typeof members;
 }>;
 
 /**

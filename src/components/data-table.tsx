@@ -1,6 +1,5 @@
 import * as React from "react"
-import { useQuery, useAction } from "convex/react"
-import { api } from "../../convex/_generated/api"
+import { mockProjects, getIssuesByProjectId } from "@/data/mock-data"
 import {
   closestCenter,
   DndContext,
@@ -33,9 +32,8 @@ import {
   IconArrowDown,
   IconMinus,
   IconUser,
-  IconRefresh,
 } from "@tabler/icons-react"
-import { Loader, LoaderCircle } from "lucide-react";
+import { Loader, LoaderCircle } from "lucide-react"
 import {
   flexRender,
   getCoreRowModel,
@@ -52,20 +50,16 @@ import {
   type VisibilityState,
 } from "@tanstack/react-table"
 
-
 import { z } from "zod"
 
 import { useIsMobile } from "@/hooks/use-mobile"
 
 import { Button } from "@/components/ui/button"
 
-
 import {
   Drawer,
-
   DrawerContent,
   DrawerDescription,
-
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
@@ -74,11 +68,8 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
-
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-
-
 
 import { Separator } from "@/components/ui/separator"
 import {
@@ -92,7 +83,6 @@ import {
 import {
   Tabs,
   TabsContent,
-
 } from "@/components/ui/tabs"
 
 import { schema } from "@/lib/schema"
@@ -120,7 +110,7 @@ function createColumns(): ColumnDef<z.infer<typeof schema>>[] {
       accessorKey: "progress",
       header: "Progress",
       cell: ({ row }) => {
-        const val = row.original.progress; // 0–1 float from Linear
+        const val = row.original.progress;
         const pct = Math.round(val * 100);
         return (
           <div className="flex items-center gap-2" title={`${pct}%`}>
@@ -179,6 +169,7 @@ function createColumns(): ColumnDef<z.infer<typeof schema>>[] {
         const statusConfig: Record<string, { icon: React.ReactNode; color: string; label: string }> = {
           backlog: { icon: <IconCircleDashed size={14} />, color: "text-muted-foreground", label: "Backlog" },
           planned: { icon: <IconCalendar size={14} />, color: "text-muted-foreground", label: "Planned" },
+          "in progress": { icon: <LoaderCircle size={14} />, color: "text-foreground", label: "In Progress" },
           "in-progress": { icon: <LoaderCircle size={14} />, color: "text-foreground", label: "In Progress" },
           started: { icon: <Loader size={14} />, color: "text-foreground", label: "Started" },
           completed: { icon: <IconCircleCheckFilled size={14} />, color: "text-foreground", label: "Completed" },
@@ -193,8 +184,6 @@ function createColumns(): ColumnDef<z.infer<typeof schema>>[] {
         );
       },
     },
-
-
     {
       accessorKey: "priority",
       header: "Priority",
@@ -250,48 +239,8 @@ function DraggableRow({ row }: { row: Row<z.infer<typeof schema>> }) {
   )
 }
 
-
 export function DataTable() {
-  const rawProjects = useQuery(api.linear.fetchProjects)
-  const syncNow = useAction(api.linear.triggerSync)
-  const [syncing, setSyncing] = React.useState(false)
-
-  async function handleSync() {
-    setSyncing(true)
-    try {
-      await syncNow({})
-    } finally {
-      setSyncing(false)
-    }
-  }
-
-  // Map Convex projects → schema shape
-  const initialData = React.useMemo((): z.infer<typeof schema>[] => {
-    if (!rawProjects) return []
-    return rawProjects.map((project, index) => ({
-      id: index + 1,
-      linearId: project.id,
-      header: project.name ?? "Untitled",
-      description: project.description ?? "No description",
-      type: project.state ?? "No State",
-      status: project.state ?? "Unknown",
-      target: project.name ?? "—",
-      priority: project.priority ?? 0,
-      createdAt: project.createdAt ?? "",
-      progress: project.progress ?? 0,
-      health: project.health ?? "",
-      content: project.content,
-      leadName: project.lead?.name ?? undefined,
-      leadEmail: project.lead?.email ?? undefined,
-    }))
-  }, [rawProjects])
-
-  const [data, setData] = React.useState<z.infer<typeof schema>[]>(() => initialData)
-
-  // Sync state whenever Convex returns fresh data
-  React.useEffect(() => {
-    setData(initialData)
-  }, [initialData])
+  const [data, setData] = React.useState<z.infer<typeof schema>[]>(() => mockProjects)
 
   const columns = React.useMemo(() => createColumns(), [])
   const [rowSelection, setRowSelection] = React.useState({})
@@ -359,19 +308,7 @@ export function DataTable() {
       className="w-full flex-col justify-start gap-6"
     >
       <div className="flex items-center justify-between px-4 lg:px-6">
-
-
-
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleSync}
-            disabled={syncing}
-          >
-            <IconRefresh className={syncing ? "animate-spin" : ""} />
-            <span className="hidden lg:inline">{syncing ? "Syncing…" : "Sync Now"}</span>
-          </Button>
           <DropdownMenu>
             <DropdownMenuTrigger>
               <Button variant="outline" size="sm">
@@ -405,7 +342,6 @@ export function DataTable() {
                 })}
             </DropdownMenuContent>
           </DropdownMenu>
-
         </div>
       </div>
       <TabsContent
@@ -463,7 +399,6 @@ export function DataTable() {
             </Table>
           </DndContext>
         </div>
-
       </TabsContent>
       <TabsContent
         value="past-performance"
@@ -484,17 +419,9 @@ export function DataTable() {
   )
 }
 
-function ProjectIssuesTable({ projectId }: { projectId: string }) {
-  const issues = useQuery(api.linear.fetchIssuesByProject, { projectId })
 
-  if (issues === undefined) {
-    return (
-      <div className="flex items-center justify-center py-6">
-        <Loader className="h-4 w-4 animate-spin text-muted-foreground" />
-        <span className="ml-2 text-xs text-muted-foreground">Loading issues…</span>
-      </div>
-    )
-  }
+function ProjectIssuesTable({ projectId }: { projectId: string }) {
+  const issues = getIssuesByProjectId(projectId)
 
   if (issues.length === 0) {
     return (
@@ -572,7 +499,7 @@ function TableCellViewer({
         <DrawerHeader className="gap-1">
           <DrawerTitle>{item.header}</DrawerTitle>
           <DrawerDescription>
-            Project details and associated issues from Linear
+            Project details and associated issues
           </DrawerDescription>
         </DrawerHeader>
         <div className="flex flex-col gap-4 overflow-y-auto px-4 pb-6 text-sm">
@@ -621,7 +548,7 @@ function TableCellViewer({
             </div>
           )}
 
-          {/* ── Content from API ── */}
+          {/* ── Content ── */}
           {item.content && (
             <>
               <Separator />
