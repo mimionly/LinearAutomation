@@ -9,7 +9,7 @@ import {
 import {
     ChevronLeftIcon,
     FileIcon,
-    FolderCogIcon,
+   
     HandshakeIcon,
     UserRoundIcon,
     UsersIcon
@@ -41,12 +41,7 @@ export function SettingsSidebar({ ...props }: React.ComponentProps<typeof Sideba
                         </SidebarMenuButton>
                     </SidebarMenuItem>
 
-                    <SidebarMenuItem>
-                        <SidebarMenuButton className="p-1 w-full" onClick={() => navigate("/settings/preferences")}>
-                            <FolderCogIcon className="size-4" />
-                            <span className="font-sansserif">Preferences</span>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
+                    
 
                     <SidebarMenuItem>
                         <SidebarMenuButton className="p-1 w-full" onClick={() => navigate("/settings/teams")}>

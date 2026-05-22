@@ -1,4 +1,4 @@
-import { internalMutation, query, mutation } from "./_generated/server";
+import { internalMutation, query, mutation } from "./_generated/server"
 import { v } from "convex/values";
 export interface LinearProject {
   name: string;

@@ -7,6 +7,8 @@ import { useEffect } from "react"
 import { useMutation } from "convex/react"
 import { api } from "../convex/_generated/api"
 import * as React from "react"
+import { MembersTable } from "@/components/members"
+import ProfilePage from "@/components/profile"
 import {
   SidebarInset,
   SidebarProvider,
@@ -29,6 +31,8 @@ function SettingsLayout() {
         <Outlet />
       </SidebarInset>
     </SidebarProvider>
+
+    
   )
 }
 
@@ -60,17 +64,17 @@ export default function App() {
       <Routes>
         {isSignedIn ? (
           <>
-            {/* Settings pages — dedicated sidebar */}
-            <Route path="/settings" element={<SettingsLayout />}>
-              <Route path="profile" />
-              <Route path="preferences" />
-              <Route path="teams" />
-              <Route path="members" />
-              <Route path="squads" />
-            </Route>
+        {/* Settings pages — dedicated sidebar */}
+        <Route path="/settings" element={<SettingsLayout />}>
+          <Route path="profile" element={<ProfilePage  />} /> 
+         
+          <Route path="teams" />
+         <Route path="members" element={<MembersTable />} />
+          <Route path="squads" />
+        </Route>
 
-            {/* Main dashboard — catch-all */}
-            <Route path="/*" element={<Dashboard />} />
+        {/* Main dashboard — catch-all */}
+        <Route path="/*" element={<Dashboard />} />
           </>
         ) : (
           <>
