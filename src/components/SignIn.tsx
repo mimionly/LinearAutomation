@@ -54,7 +54,7 @@ export default function SignIn() {
           className="h-16 w-auto rounded-2xl mx-auto mb-6 relative z-10"
           onError={(e) => { e.currentTarget.style.display = "none" }}
         />
-        <h1 className="mb-2 text-3xl font-bold text-black relative z-10">DevVoid</h1>
+        <h1 className="mb-2 text-3xl font-bold text-black dark:text-amber-50 relative z-10">DevVoid</h1>
         <p className="mb-8 text-zinc-400 relative z-10">
           Streamlined task management dashboard linked with our Linear organization.
         </p>

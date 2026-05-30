@@ -1,20 +1,20 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
-// this is for linear projects
 export default defineSchema({
+  // ── Linear sync ───────────────────────────────────────────────────────────
   linearProjects: defineTable({
-    id: v.string(),
-    name: v.string(),
-    state: v.string(),
-    startDate: v.optional(v.string()),
-    targetDate: v.optional(v.string()),
+    id:          v.string(),
+    name:        v.string(),
+    state:       v.string(),
+    startDate:   v.optional(v.string()),
+    targetDate:  v.optional(v.string()),
     description: v.optional(v.string()),
-    priority: v.optional(v.number()),
-    createdAt: v.optional(v.string()),
-    health: v.optional(v.string()),
-    progress: v.optional(v.number()),
-    content: v.optional(v.string()),
+    priority:    v.optional(v.number()),
+    createdAt:   v.optional(v.string()),
+    health:      v.optional(v.string()),
+    progress:    v.optional(v.number()),
+    content:     v.optional(v.string()),
     badgeStatus: v.optional(
       v.union(
         v.literal("backlog"),
@@ -27,58 +27,86 @@ export default defineSchema({
     lead: v.optional(
       v.union(
         v.null(),
-        v.object({
-          name: v.string(),
-          email: v.string(),
-        }),
+        v.object({ name: v.string(), email: v.string() }),
       ),
     ),
   }).index("by_linearId", ["id"]),
-  //this is for linear issues
+
   linearIssues: defineTable({
-    id: v.string(),
-    title: v.string(),
+    id:       v.string(),
+    title:    v.string(),
     priority: v.optional(v.number()),
-    state: v.object({
-      name: v.string(),
-    }),
+    state:    v.object({ name: v.string() }),
     createdAt: v.optional(v.string()),
     project: v.union(
       v.null(),
-      v.object({
-        id: v.string(),
-        name: v.string(),
-      }),
+      v.object({ id: v.string(), name: v.string() }),
     ),
     assignee: v.union(
       v.null(),
-      v.object({
-        email: v.string(),
-        id: v.string(),
-        name: v.string(),
-      }),
+      v.object({ email: v.string(), id: v.string(), name: v.string() }),
     ),
   })
     .index("by_linearId", ["id"])
     .index("by_projectId", ["project.id"]),
-  // this for the login details
+
+  // ── Auth audit ────────────────────────────────────────────────────────────
   userActions: defineTable({
     clerkId: v.string(),
-    action: v.string(),
+    action:  v.string(),
   }).index("by_clerkId", ["clerkId"]),
 
-members: defineTable({
-  
-  name: v.string(),
-  handle: v.string(),
+  // ── Workspace members ─────────────────────────────────────────────────────
+  members: defineTable({
+    name:        v.string(),
+    handle:      v.string(),
+    email:       v.string(),
+    avatarUrl:   v.optional(v.string()),
+    role:        v.union(v.literal("Admin"), v.literal("User")),
+    status:      v.union(v.literal("active"), v.literal("suspended")),
+    // FIX: joinedAt is written as string in acceptInvite — must not be optional
+    joinedAt:    v.string(),
+    // FIX: clerkUserId is always written as a string in acceptInvite,
+    // keeping v.union(v.string(), v.null()) so existing null rows stay valid
+    clerkUserId: v.union(v.string(), v.null()),
+  })
+    .index("by_clerk_id", ["clerkUserId"])
+    .index("by_email",    ["email"])
+    .index("by_status",   ["status"]),
+
+  // ── Teams ─────────────────────────────────────────────────────────────────
+  teams: defineTable({
+    name:        v.string(),
+    identifier:  v.string(),
+    iconEmoji:   v.string(),
+    iconColor:   v.string(),
+    description: v.optional(v.string()),
+    createdAt:   v.string(),
+  })
+    .index("by_name", ["name"])
+    .index("by_identifier", ["identifier"]),
+
+  memberTeams: defineTable({
+    memberId: v.id("members"),
+    teamId:   v.id("teams"),
+  })
+    .index("by_member", ["memberId"])
+    .index("by_team",   ["teamId"]),
+
+  // ── Invites ───────────────────────────────────────────────────────────────
+ // convex/schema.ts — in your invites table definition
+invites: defineTable({
+  createdAt: v.string(),
   email: v.string(),
-  avatarUrl: v.optional(v.string()),
+  expiresAt: v.string(),
+  invitedBy: v.id("members"),
   role: v.union(v.literal("Admin"), v.literal("User")),
-  teams: v.number(),
-  joinedAt: v.optional(v.string()),
-  clerkUserId: v.union(v.string(), v.null()),
+  status: v.union(v.literal("pending"), v.literal("accepted"), v.literal("expired"), v.literal("revoked")),
+  teamName: v.optional(v.string()),   // keep for old rows
+  teamIds: v.optional(v.array(v.id("teams"))),  // add this
+  token: v.string(),
 })
-  .index("by_clerk_id", ["clerkUserId"])
-  .index("by_email", ["email"])
-  
+    .index("by_email",  ["email"])
+    .index("by_token",  ["token"])
+    .index("by_status", ["status"]),
 });

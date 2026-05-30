@@ -5,10 +5,13 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { LogOutIcon, SettingsIcon, UserPlusIcon } from "lucide-react";
-
+import { useClerk } from "@clerk/clerk-react"
 export default function DevVoidDropdown() {
   const navigate = useNavigate();
-
+  const { signOut } = useClerk();
+  const handleLogout = async () => {
+    await signOut();
+  }
   return (
     <DropdownMenuContent
       className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
@@ -20,13 +23,14 @@ export default function DevVoidDropdown() {
         <SettingsIcon className="mr-2 size-4" />
         Settings
       </DropdownMenuItem>
-      <DropdownMenuItem onClick={() => navigate("/invite")}>
+      <DropdownMenuItem onClick={() => navigate("/settings/members")}>
         <UserPlusIcon className="mr-2 size-4" />
         Invite & Manage Members
       </DropdownMenuItem>
       <DropdownMenuSeparator />
-      <DropdownMenuItem onClick={() => navigate("/logout")}>
-        <LogOutIcon className="mr-2 <text-red-500 size-4" />
+      <DropdownMenuItem onClick={handleLogout}>
+        <LogOutIcon className="mr-2 <text-red-500 size-4"
+        />
         Log Out
       </DropdownMenuItem>
     </DropdownMenuContent>
