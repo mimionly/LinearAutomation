@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useTheme } from "next-themes";
 import EmojiPicker, { Theme } from "emoji-picker-react";
+import { UserRoundPen } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -82,15 +83,15 @@ interface TeamIconProps {
 
 function TeamIcon({ emoji, size = "md", className = "", onClick }: TeamIconProps) {
   const sizeClasses = {
-    sm:      "h-10 w-10 text-base rounded-xl",
-    md:      "h-11 w-11 text-lg rounded-xl",
-    preview: "h-12 w-12 text-xl rounded-xl",
-    lg:      "h-14 w-14 text-2xl rounded-xl",
+    sm:      "h-10 w-10 text-base ",
+    md:      "h-11 w-11 text-lg ",
+    preview: "h-12 w-12 text-xl ",
+    lg:      "h-14 w-14 text-2xl ",
   };
 
   const shared =
-    `flex items-center justify-center border border-border bg-muted/40 hover:bg-muted/70 ` +
-    `dark:bg-zinc-900/40 dark:hover:bg-zinc-900/70 shrink-0 select-none shadow-xs ` +
+    `flex items-center justify-center ` +
+    ` shrink-0 select-none shadow-xs ` +
     `transition-all duration-200 ${sizeClasses[size]} ${className}`;
 
   const emojiSpan = (
@@ -265,8 +266,8 @@ function ManageTeamMembersDialog({ team, isAdmin }: ManageTeamMembersDialogProps
           </div>
 
           {success && (
-            <div className="text-xs text-emerald-700 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 p-2.5 rounded-md flex items-center gap-2">
-              <IconCheck size={13} className="shrink-0 text-emerald-500" />
+            <div className="text-xs text-emerald-950 dark:text-emerald-300    p-2.5  flex items-center gap-2">
+              <IconCheck size={13} className="shrink-0 text-emerald-950 dark:text-emerald-300" />
               Team members updated!
             </div>
           )}
@@ -351,9 +352,9 @@ function TeamDetailsView({ team, isAdmin, onBack }: TeamDetailsViewProps) {
       </div>
 
       {/* Hero */}
-      <div className="relative overflow-hidden rounded-xl bg-card p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="relative overflow-hidden  bg-card p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-start gap-4">
-          <TeamIcon emoji={team.iconEmoji ?? "👥"} size="lg" />
+          <TeamIcon emoji={team.iconEmoji ?? " "} size="lg" />
           <div className="flex flex-col min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground truncate">
@@ -642,7 +643,7 @@ interface TeamCardProps {
 
 function TeamCard({ team, isAdmin }: TeamCardProps) {
   const [, setSearchParams] = useSearchParams();
-  const emoji = team.iconEmoji ?? "👥";
+  const emoji = team.iconEmoji ?? " ";
   const identifier = team.identifier || getTeamIdentifier(team.name);
   const memberCount = (team.members ?? []).length;
 
@@ -657,7 +658,7 @@ function TeamCard({ team, isAdmin }: TeamCardProps) {
           >
             <TeamIcon emoji={emoji} size="md" />
             <div className="flex flex-col min-w-0 flex-1">
-              <span className="text-sm font-semibold text-foreground leading-tight hover:underline">
+              <span className="text-sm font-semibold text-foreground leading-tight  truncate">
                 {team.name}
               </span>
               {team.description ? (
@@ -729,7 +730,7 @@ function CreateTeamDialog({ open, onOpenChange }: CreateTeamDialogProps) {
     setName("");
     setDescription("");
     setIdentifier("");
-    setSelectedEmoji("🚀");
+    setSelectedEmoji("  ");
     setHasManuallyEditedIdentifier(false);
     setShowEmojiPicker(false);
     setError("");
@@ -784,7 +785,7 @@ function CreateTeamDialog({ open, onOpenChange }: CreateTeamDialogProps) {
           <div className="flex flex-col gap-5 px-5 py-5 max-h-[72vh] overflow-y-auto">
 
             {/* Preview */}
-            <div className="flex items-center gap-4 border rounded-xl p-3.5 bg-muted/20">
+            <div className="flex items-center gap-4  p-3.5 bg-muted/20">
               <TeamIcon emoji={selectedEmoji} size="preview" />
               <div className="flex flex-col min-w-0">
                 <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">Preview</span>
@@ -804,8 +805,8 @@ function CreateTeamDialog({ open, onOpenChange }: CreateTeamDialogProps) {
                     key={emoji}
                     type="button"
                     onClick={() => { setSelectedEmoji(emoji); setShowEmojiPicker(false); }}
-                    className={`h-9 w-9 text-lg flex items-center justify-center rounded-lg transition-all hover:bg-muted border ${
-                      selectedEmoji === emoji && !showEmojiPicker ? "bg-muted border-border" : "border-transparent"
+                    className={`h-9 w-9 text-lg flex items-center justify-center  transition-all hover:bg-muted ${
+                      selectedEmoji === emoji && !showEmojiPicker ? "bg-muted " : ""
                     }`}
                   >
                     {emoji}
@@ -815,13 +816,13 @@ function CreateTeamDialog({ open, onOpenChange }: CreateTeamDialogProps) {
                   <DropdownMenuTrigger >
                     <button
                       type="button"
-                      className={`h-9 px-3 text-xs border rounded-lg font-medium flex items-center gap-1.5 hover:bg-muted transition-colors ${showEmojiPicker ? "bg-muted" : ""}`}
+                      className={`h-9 px-3 text-xs  rounded-lg font-medium flex items-center gap-1.5 hover:bg-muted transition-colors ${showEmojiPicker ? "bg-muted" : ""}`}
                     >
-                      More <span className="text-sm">🔍</span>
+                      More 
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="p-0 border-0 bg-transparent shadow-none" style={{ width: "300px" }} align="start">
-                    <div className="z-50 shadow-2xl border rounded-xl overflow-hidden bg-card">
+                    <div className="z-50 shadow-2xl border  overflow-hidden bg-card">
                       <EmojiPicker
                         onEmojiClick={(d) => { setSelectedEmoji(d.emoji); setShowEmojiPicker(false); }}
                         theme={resolvedTheme === "dark" ? Theme.DARK : Theme.LIGHT}
@@ -889,8 +890,8 @@ function CreateTeamDialog({ open, onOpenChange }: CreateTeamDialogProps) {
 
             {/* Feedback */}
             {success && (
-              <div className="flex items-center gap-2  bg-emerald-50 border    px-3 py-2.5 text-xs text-emerald-800 dark:text-emerald-400">
-                <IconCheck size={13} className="shrink-0 text-emerald-500" />
+              <div className="flex items-center gap-2     px-3 py-2.5 text-xs text-emerald-900 dark:text-emerald-300">
+                <IconCheck size={13} className="shrink-0 text-emerald-500 dark:text-emerald-300" />
                 Team created successfully!
               </div>
             )}
@@ -988,7 +989,7 @@ export function TeamPage() {
 
       {/* Non-admin notice */}
       {caller && !isAdmin && (
-        <div className="flex items-start gap-2.5 rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-xs sm:text-sm text-amber-700 dark:text-amber-400">
+        <div className="flex items-start gap-2.5 rounded-xl border border-red-700 px-4 py-3 text-xs sm:text-sm text-red-800 dark:text-red-800">
           <IconAlertCircle size={15} className="mt-0.5 shrink-0" />
           <span>
             <strong>View-only:</strong> You must be an Admin to create or modify teams.
@@ -1068,7 +1069,7 @@ export function TeamPage() {
                       <button
                         type="button"
                         onClick={() => setSearchParams({ teamId: team._id })}
-                        className="flex flex-col text-left hover:underline focus:outline-none"
+                        className="flex flex-col text-left focus:outline-none"
                       >
                         <span className="text-sm font-semibold">{team.name}</span>
                         {team.description ? (
