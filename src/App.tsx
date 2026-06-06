@@ -13,6 +13,7 @@ import { SettingsSidebar } from "@/components/ui/settings-sidebar";
 import { TeamPage } from "./components/TeamPage";
 import Settings from "./organization/organization";
 import InvitePage from "./organization/invite";
+import VenturesPage from "./components/Ventures";
 
 function SetOrganization() {
   const { setActive, isLoaded } = useOrganizationList();
@@ -87,17 +88,18 @@ export default function App() {
         {isSignedIn ? (
           <>
             <Route path="/settings" element={<SettingsLayout />}>
-             
               <Route index element={<Navigate to="profile" replace />} />
               <Route path="profile" element={<ProfilePage />} />
               <Route path="teams"   element={<TeamPage />} />
               <Route path="members" element={<Settings />} />
+              <Route path="ventures" element={<VenturesPage />} />
               <Route path="squads"  element={
                 <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
                   Squads coming soon.
                 </div>
               } />
             </Route>
+            
 
             <Route path="/invite" element={<InvitePage />} />
             <Route path="/*" element={<Dashboard />} />

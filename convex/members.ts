@@ -919,3 +919,15 @@ export const handleMembershipDeletedInternal = internalMutation({
     }
   },
 })
+
+export const getCurrentUser = query({
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return null;
+
+    return await ctx.db
+      .query("members")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkUserId", identity.subject))
+      .first(); // returns the full member record, including role: "Admin" | "Member" etc.
+  },
+});

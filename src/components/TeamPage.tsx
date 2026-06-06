@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useTheme } from "next-themes";
 import EmojiPicker, { Theme } from "emoji-picker-react";
-import { UserRoundPen } from 'lucide-react';
+//import { UserRoundPen } from 'lucide-react';
 import {
   Dialog,
   DialogContent,

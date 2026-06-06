@@ -16,7 +16,9 @@ export default function InvitePage() {
         <div className="space-y-1">
           <h1 className="text-3xl font-bold tracking-tight">Members & Invites</h1>
           <p className="text-muted-foreground text-sm">
-            Manage workspace memberships and invite new collaborators.
+            Manage
+            
+             workspace memberships and invite new collaborators.
           </p>
         </div>
       

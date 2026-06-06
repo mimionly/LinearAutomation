@@ -11,6 +11,7 @@
 import type * as http from "../http.js";
 import type * as linear from "../linear.js";
 import type * as members from "../members.js";
+import type * as ventures from "../ventures.js";
 
 import type {
   ApiFromModules,
@@ -22,6 +23,7 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   linear: typeof linear;
   members: typeof members;
+  ventures: typeof ventures;
 }>;
 
 /**

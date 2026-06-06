@@ -95,18 +95,31 @@ export default defineSchema({
 
   // ── Invites ───────────────────────────────────────────────────────────────
  // convex/schema.ts — in your invites table definition
-invites: defineTable({
-  createdAt: v.string(),
-  email: v.string(),
-  expiresAt: v.string(),
-  invitedBy: v.id("members"),
-  role: v.union(v.literal("Admin"), v.literal("User")),
-  status: v.union(v.literal("pending"), v.literal("accepted"), v.literal("expired"), v.literal("revoked")),
-  teamName: v.optional(v.string()),   // keep for old rows
-  teamIds: v.optional(v.array(v.id("teams"))),  // add this
-  token: v.string(),
-})
-    .index("by_email",  ["email"])
-    .index("by_token",  ["token"])
-    .index("by_status", ["status"]),
+  invites: defineTable({
+    createdAt: v.string(),
+    email: v.string(),
+    expiresAt: v.string(),
+    invitedBy: v.id("members"),
+    role: v.union(v.literal("Admin"), v.literal("User")),
+    status: v.union(v.literal("pending"), v.literal("accepted"), v.literal("expired"), v.literal("revoked")),
+    teamName: v.optional(v.string()),   // keep for old rows
+    teamIds: v.optional(v.array(v.id("teams"))),  // add this
+    token: v.string(),
+  })
+      .index("by_email",  ["email"])
+      .index("by_token",  ["token"])
+      .index("by_status", ["status"]),
+
+  ventures: defineTable({
+    name: v.string(),
+    projects: v.number(),
+    ownerId: v.union(v.id("members"), v.null()),
+    status: v.union(
+      v.literal("active"),    
+      v.literal("planned"),
+      v.literal("completed")
+    ),
+    summary: v.optional(v.string()),
+    targetDeadline: v.optional(v.string()),
+  }),
 });

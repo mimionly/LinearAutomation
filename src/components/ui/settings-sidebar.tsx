@@ -9,7 +9,6 @@ import {
 import { 
     ChevronLeftIcon,
     FileIcon,
-   
     HandshakeIcon,
     UserRoundIcon,
     UsersIcon
@@ -63,6 +62,12 @@ export function SettingsSidebar({ ...props }: React.ComponentProps<typeof Sideba
                         <SidebarMenuButton className="p-1 w-full" onClick={() => navigate("/settings/squads")}>
                             <UsersIcon className="size-4" />
                             <span className=" font-sansserif">Squads</span>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton className="p-1 w-full" onClick={() => navigate("/settings/Ventures")}>
+                            <UserRoundIcon className="size-4" />
+                            <span className=" font-sansserif">Ventures</span>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarMenu>

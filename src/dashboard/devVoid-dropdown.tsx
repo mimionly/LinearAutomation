@@ -6,6 +6,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { LogOutIcon, SettingsIcon, UserPlusIcon } from "lucide-react";
 import { useClerk } from "@clerk/clerk-react"
+
 export default function DevVoidDropdown() {
   const navigate = useNavigate();
   const { signOut } = useClerk();
@@ -23,7 +24,7 @@ export default function DevVoidDropdown() {
         <SettingsIcon className="mr-2 size-4" />
         Settings
       </DropdownMenuItem>
-      <DropdownMenuItem onClick={() => navigate("/settings/members")}>
+      <DropdownMenuItem onClick={() => navigate("/invite")}>
         <UserPlusIcon className="mr-2 size-4" />
         Invite & Manage Members
       </DropdownMenuItem>
