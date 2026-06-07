@@ -116,9 +116,9 @@ export default function ProfilePage() {
         <Card className="border border-border shadow-sm">
           <CardContent className="p-0">
 
-            <div className="flex items-center justify-between px-6 py-5">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between px-4 sm:px-6 py-5">
               <Label className="text-sm font-semibold">Profile picture</Label>
-              <div className="flex flex-col items-center gap-1.5">
+              <div className="flex flex-col items-center sm:items-end gap-1.5">
                 <label htmlFor="avatar-upload" className="text-[11px] text-muted-foreground">
                   click to change
                 </label>
@@ -146,20 +146,20 @@ export default function ProfilePage() {
 
             <Separator />
 
-            <div className="flex items-center justify-between px-6 py-5">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between px-4 sm:px-6 py-5">
               <Label htmlFor="fullname" className="text-sm font-semibold">Full name</Label>
               <Input
                 id="fullname"
                 value={form.fullName}
                 onChange={(e) => setField("fullName", e.target.value)}
                 placeholder="Your Name"
-                className="w-52 h-9 text-sm"
+                className="w-full sm:w-52 h-9 text-sm"
               />
             </div>
 
             <Separator />
 
-            <div className="flex items-center justify-between px-6 py-5">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between px-4 sm:px-6 py-5">
               <div className="space-y-0.5">
                 <Label htmlFor="title" className="text-sm font-semibold">Title</Label>
                 <p className="text-xs text-muted-foreground">Your job title or role</p>
@@ -169,13 +169,13 @@ export default function ProfilePage() {
                 value={form.title}
                 onChange={(e) => setField("title", e.target.value)}
                 placeholder="e.g. Software engineer"
-                className="w-52 h-9 text-sm"
+                className="w-full sm:w-52 h-9 text-sm"
               />
             </div>
 
             <Separator />
 
-            <div className="flex items-center justify-between px-6 py-5">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between px-4 sm:px-6 py-5">
               <div className="space-y-0.5">
                 <Label htmlFor="username" className="text-sm font-semibold">Username</Label>
                 <p className="text-xs text-muted-foreground">One word, like a nickname or first name</p>
@@ -184,16 +184,16 @@ export default function ProfilePage() {
                 id="username"
                 value={form.username}
                 onChange={(e) => setField("username", e.target.value)}
-                className="w-52 h-9 text-sm"
+                className="w-full sm:w-52 h-9 text-sm"
               />
             </div>
 
             <Separator />
 
-            <div className="flex items-center justify-between px-6 py-5">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between px-4 sm:px-6 py-5">
               <Label className="text-sm font-semibold">Email</Label>
-              <div className="flex flex-col items-end gap-1">
-                <div className="flex items-center gap-2">
+              <div className="flex flex-col items-start sm:items-end gap-1 w-full sm:w-auto">
+                <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
                   {editingEmail ? (
                     <>
                       <Input
@@ -203,13 +203,13 @@ export default function ProfilePage() {
                           if (emailError) setEmailError("");
                         }}
                         onKeyDown={(e) => e.key === "Enter" && handleConfirm()}
-                        className={`h-8 w-56 text-sm ${emailError ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                        className={`h-8 w-full sm:w-56 text-sm ${emailError ? "border-destructive focus-visible:ring-destructive" : ""}`}
                         autoFocus
                         placeholder="you@gmail.com"
                       />
                       <Button
                         variant="ghost" size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                        className="h-8 w-8 text-muted-foreground hover:text-foreground shrink-0"
                         onClick={handleConfirm}
                       >
                         <Check className="h-4 w-4" />
@@ -217,11 +217,11 @@ export default function ProfilePage() {
                     </>
                   ) : (
                     <>
-                      <span className="text-sm text-muted-foreground">
+                      <span className="text-sm text-muted-foreground truncate max-w-[200px] sm:max-w-none">
                         {form.email || <span className="italic opacity-50">Not set</span>}
                       </span>
                       <Button
-                        variant="outline" size="icon" className="h-7 w-7"
+                        variant="outline" size="icon" className="h-7 w-7 shrink-0"
                         onClick={() => setEditingEmail(true)}
                       >
                         <Pencil className="h-3 w-3" />
@@ -242,7 +242,7 @@ export default function ProfilePage() {
             <p className="text-muted-foreground text-sm">Customize how the app looks and feels.</p>
           </div>
           <Card className="border border-border shadow-sm">
-            <CardContent className="px-6 py-5 space-y-4">
+            <CardContent className="px-4 sm:px-6 py-5 space-y-4">
               <div className="space-y-0.5">
                 <p className="text-sm font-semibold">Preferred theme</p>
                 <p className="text-xs text-muted-foreground">Choose how the interface appears to you.</p>
