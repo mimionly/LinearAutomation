@@ -45,7 +45,7 @@ Before running the project, ensure you have:
 
 ```bash
 git clone <repository-url>
-cd venture
+cd LINEAR
 ```
 
 ### Install Dependencies
