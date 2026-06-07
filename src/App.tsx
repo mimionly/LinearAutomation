@@ -1,5 +1,5 @@
 import { useUser, useOrganizationList, AuthenticateWithRedirectCallback } from "@clerk/clerk-react";
-import { BrowserRouter, Routes, Route, Outlet, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Outlet, Navigate, Link } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import SignIn from "@/components/SignIn";
 import Dashboard from "./dashboard/Dashboard";
@@ -8,8 +8,9 @@ import { useMutation } from "convex/react";
 import { api } from "../convex/_generated/api";
 import * as React from "react";
 import ProfilePage from "@/components/profile";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { SettingsSidebar } from "@/components/ui/settings-sidebar";
+import { Separator } from "@/components/ui/separator";
 import { TeamPage } from "./components/TeamPage";
 import Settings from "./organization/organization";
 import InvitePage from "./organization/invite";
@@ -53,6 +54,16 @@ function SettingsLayout() {
     >
       <SettingsSidebar variant="inset" />
       <SidebarInset>
+        <header className="flex h-12 shrink-0 items-center gap-2 border-b px-4 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+          <SidebarTrigger className="-ml-1" />
+          <Separator
+            orientation="vertical"
+            className="mx-2 data-[orientation=vertical]:h-4"
+          />
+          <Link to="/" className="text-sm font-semibold tracking-wider text-zinc-900 dark:text-white hover:text-stone-600 dark:hover:text-stone-300 transition-colors">
+            &lt; Settings
+          </Link>
+        </header>
         <Outlet />
       </SidebarInset>
     </SidebarProvider>
