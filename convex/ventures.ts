@@ -32,6 +32,7 @@ export const updateOwner = mutation({
       if (targetMember.status !== "active") throw new Error("The selected owner's account is not active.");
     }
 
+    
     await ctx.db.patch(args.ventureId, { ownerId: args.ownerId });
   },
 });
@@ -82,5 +83,63 @@ export const createVenture = mutation({
 export const listVentures = query({
   handler: async (ctx) => {
     return await ctx.db.query("ventures").collect();
+  },
+});
+
+export const updateStatus = mutation({
+  args: {
+    ventureId: v.id("ventures"),
+    status: v.union(
+      v.literal("active"),
+      v.literal("planned"),
+      v.literal("completed")
+    ),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+
+    const caller = await ctx.db
+      .query("members")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkUserId", identity.subject))
+      .first();
+
+    if (!caller) throw new Error("You are not a member of this workspace.");
+    if (caller.role !== "Admin") {
+      throw new Error("Only admins can update venture status.");
+    }
+
+    await ctx.db.patch(args.ventureId, { status: args.status });
+  },
+});
+
+export const updateTargetDeadline = mutation({
+  args: {
+    ventureId: v.id("ventures"),
+    targetDeadline: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+
+    const caller = await ctx.db
+      .query("members")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkUserId", identity.subject))
+      .first();
+
+    if (!caller) throw new Error("You are not a member of this workspace.");
+    if (caller.role !== "Admin") {
+      throw new Error("Only admins can update venture target deadlines.");
+    }
+
+    if (args.targetDeadline === undefined) {
+      const venture = await ctx.db.get(args.ventureId);
+      if (venture) {
+        const { targetDeadline, ...rest } = venture;
+        await ctx.db.replace(args.ventureId, rest);
+      }
+    } else {
+      await ctx.db.patch(args.ventureId, { targetDeadline: args.targetDeadline });
+    }
   },
 });
