@@ -1,5 +1,4 @@
 import * as React from "react"
-import { useSearchParams } from "react-router-dom"
 import { mockProjects, getIssuesByProjectId } from "@/data/mock-data"
 import {
   closestCenter,
@@ -33,7 +32,6 @@ import {
   IconArrowDown,
   IconMinus,
   IconUser,
-  IconArrowLeft,
 } from "@tabler/icons-react"
 import { Loader, LoaderCircle } from "lucide-react"
 import {
@@ -243,8 +241,6 @@ function DraggableRow({ row }: { row: Row<z.infer<typeof schema>> }) {
 
 export function DataTable() {
   const [data, setData] = React.useState<z.infer<typeof schema>[]>(() => mockProjects)
-  const [searchParams, setSearchParams] = useSearchParams()
-  const projectId = searchParams.get("projectId")
 
   const columns = React.useMemo(() => createColumns(), [])
   const [rowSelection, setRowSelection] = React.useState({})
@@ -258,19 +254,6 @@ export function DataTable() {
     pageIndex: 0,
     pageSize: 10,
   })
-
-  if (projectId) {
-    const project = data.find((p) => p.linearId === projectId)
-    if (project) {
-      return (
-        <ProjectDetailsView
-          project={project}
-          onBack={() => setSearchParams({})}
-        />
-      )
-    }
-  }
-
   const sortableId = React.useId()
   const sensors = useSensors(
     useSensor(MouseSensor, {}),
@@ -492,146 +475,100 @@ function TableCellViewer({
 }: {
   item: z.infer<typeof schema>
 }) {
-  const [, setSearchParams] = useSearchParams()
+  const isMobile = useIsMobile()
 
-  return (
-    <Button
-      variant="link"
-      className="w-fit px-0 text-left font-medium text-indigo-400 hover:text-indigo-300 hover:underline"
-      onClick={() => setSearchParams({ projectId: item.linearId })}
-    >
-      {item.header}
-    </Button>
-  )
-}
-
-interface ProjectDetailsViewProps {
-  project: z.infer<typeof schema>;
-  onBack: () => void;
-}
-
-function ProjectDetailsView({ project, onBack }: ProjectDetailsViewProps) {
-  const [searchParams, setSearchParams] = useSearchParams()
-  const healthMap: Record<string, { label: string; color: string; dot: string }> = {
-    onTrack: { label: "On Track", color: "bg-emerald-950/30 text-emerald-400 border-emerald-900/30", dot: "bg-emerald-500" },
-    atRisk: { label: "At Risk", color: "bg-amber-950/30 text-amber-400 border-amber-900/30", dot: "bg-amber-500" },
-    offTrack: { label: "Off Track", color: "bg-red-950/30 text-red-400 border-red-900/30", dot: "bg-red-500" },
-    noData: { label: "No Data", color: "bg-muted text-muted-foreground border-border", dot: "bg-muted-foreground" },
+  const healthMap: Record<string, { label: string; color: string }> = {
+    onTrack: { label: "On Track", color: "text-emerald-500" },
+    atRisk: { label: "At Risk", color: "text-amber-500" },
+    offTrack: { label: "Off Track", color: "text-red-500" },
+    noData: { label: "No Data", color: "text-muted-foreground" },
   }
-  const healthCfg = healthMap[project.health] ?? healthMap.noData
+  const healthCfg = healthMap[item.health] ?? { label: item.health || "—", color: "text-muted-foreground" }
+
+  const priorityMap: Record<number, string> = { 0: "None", 1: "Urgent", 2: "High", 3: "Medium", 4: "Low" }
+  const pct = Math.round((item.progress ?? 0) * 100)
 
   return (
-    <div className="flex flex-col gap-6 w-full max-w-4xl mx-auto px-4 lg:px-6 py-4 animate-in fade-in duration-200">
-      {/* Back button & Breadcrumbs */}
-      <div className="flex flex-col gap-2">
-        <button
-          onClick={onBack}
-          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors font-medium w-fit"
-        >
-          <IconArrowLeft size={14} />
-          Back to Projects
-        </button>
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground/60 mt-1">
-          <span>Initiatives</span>
-          <span className="text-muted-foreground/30">/</span>
-          <span className="text-foreground font-medium">{project.header}</span>
-        </div>
-      </div>
-
-      {/* Hero / Header info */}
-      <div className="flex flex-col gap-3">
-        <h1 className="text-3xl font-semibold text-foreground tracking-tight select-all">
-          {project.header}
-        </h1>
-        <p className="text-sm text-muted-foreground leading-relaxed">
-          {project.description || "Add a short summary..."}
-        </p>
-      </div>
-
-      {/* Properties Section */}
-      <div className="flex flex-col gap-3 border-t border-b border-border/40 py-4">
-        <div className="flex flex-wrap gap-x-10 gap-y-4 text-xs font-medium text-muted-foreground">
-          {/* Status */}
-          <div className="flex items-center gap-2 min-w-[140px]">
-            <span className="text-muted-foreground/50 w-14">Status</span>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border border-border/80 text-foreground text-[11px] font-semibold bg-muted/20">
-              <span className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
-              {project.status}
-            </span>
+    <Drawer direction={isMobile ? "bottom" : "right"}>
+      <DrawerTrigger>
+        <Button variant="link" className="w-fit px-0 text-left text-foreground">
+          {item.header}
+        </Button>
+      </DrawerTrigger>
+      <DrawerContent>
+        <DrawerHeader className="gap-1">
+          <DrawerTitle>{item.header}</DrawerTitle>
+          <DrawerDescription>
+            Project details and associated issues
+          </DrawerDescription>
+        </DrawerHeader>
+        <div className="flex flex-col gap-4 overflow-y-auto px-4 pb-6 text-sm">
+          {/* ── Project metadata ── */}
+          <div className="flex flex-col gap-1.5">
+            <Label className="text-muted-foreground">Description</Label>
+            <div className="font-medium leading-relaxed">{item.description || "—"}</div>
           </div>
-          {/* Lead */}
-          <div className="flex items-center gap-2 min-w-[180px]">
-            <span className="text-muted-foreground/50 w-14">Lead</span>
-            <div className="flex items-center gap-1.5 text-foreground">
-              <div className="h-5 w-5 rounded-full bg-indigo-600/80 flex items-center justify-center text-[10px] text-white font-bold uppercase ring-1 ring-white/10">
-                {project.leadName?.slice(0, 2) || "U"}
+
+          <Separator />
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-muted-foreground">Status</Label>
+              <div className="font-medium">{item.status}</div>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-muted-foreground">Priority</Label>
+              <div className="font-medium">{priorityMap[item.priority] ?? item.priority}</div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-muted-foreground">Health</Label>
+              <div className={`font-medium ${healthCfg.color}`}>{healthCfg.label}</div>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-muted-foreground">Progress</Label>
+              <div className="flex items-center gap-2">
+                <div className="h-1.5 w-20 rounded-full bg-muted overflow-hidden">
+                  <div className="h-full rounded-full bg-foreground" style={{ width: `${pct}%` }} />
+                </div>
+                <span className="text-xs text-muted-foreground">{pct}%</span>
               </div>
-              <span className="text-sm font-medium">{project.leadName || "Unassigned"}</span>
             </div>
           </div>
-          {/* Target Date */}
-          <div className="flex items-center gap-2 min-w-[150px]">
-            <span className="text-muted-foreground/50 w-14">Target</span>
-            <div className="flex items-center gap-1.5 text-foreground text-sm font-medium">
-              <IconCalendar size={14} className="text-muted-foreground" />
-              <span>
-                {project.createdAt ? new Date(project.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' }) : "No date"}
-              </span>
+
+          {(item.leadName || item.leadEmail) && (
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-muted-foreground">Lead</Label>
+              <div className="inline-flex items-center gap-1 font-medium">
+                <IconUser size={14} className="text-muted-foreground" />
+                {item.leadName}{item.leadEmail ? ` (${item.leadEmail})` : ""}
+              </div>
             </div>
+          )}
+
+          {/* ── Content ── */}
+          {item.content && (
+            <>
+              <Separator />
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-muted-foreground">Content</Label>
+                <div className="max-h-48 overflow-y-auto rounded-md border bg-muted/30 p-3 text-xs leading-relaxed whitespace-pre-wrap">
+                  {item.content}
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* ── Project issues sub-table ── */}
+          <Separator />
+          <div className="flex flex-col gap-1.5">
+            <Label className="text-muted-foreground">Issues</Label>
+            <ProjectIssuesTable projectId={item.linearId} />
           </div>
         </div>
-      </div>
-
-      {/* Resources Section */}
-      <div className="flex flex-col gap-2">
-        <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Resources</h3>
-        <button className="text-xs text-muted-foreground/40 hover:text-muted-foreground/60 transition-colors w-fit italic">
-          + Add document or link...
-        </button>
-      </div>
-
-      {/* Latest Update Card */}
-      <div className="border border-border/40 bg-card/20 rounded-xl p-4 shadow-xs">
-        <div className="flex items-center justify-between border-b border-border/40 pb-2.5 mb-3">
-          <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Latest update</h3>
-          <button className="text-xs text-indigo-400 hover:text-indigo-300 font-medium">Update</button>
-        </div>
-        
-        <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
-          <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 border text-[11px] font-semibold ${healthCfg.color}`}>
-            <span className={`h-1.5 w-1.5 rounded-full ${healthCfg.dot}`} />
-            {healthCfg.label}
-          </span>
-          <span>•</span>
-          <div className="flex items-center gap-1 font-medium text-foreground">
-            <span>{project.leadName || "System"}</span>
-          </div>
-          <span>•</span>
-          <span>4min ago</span>
-        </div>
-
-        <p className="text-sm text-foreground/90 leading-relaxed font-sans">
-          {project.health === "onTrack" ? "ok soemthings omenknjn done" : "No project roadblocks currently identified. All tasks are proceeding normally."}
-        </p>
-      </div>
-
-      {/* Description Section */}
-      <div className="flex flex-col gap-2">
-        <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Description</h3>
-        {project.content ? (
-          <div className="max-w-none rounded-xl border border-border/40 p-4 bg-muted/5 text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap">
-            {project.content}
-          </div>
-        ) : (
-          <span className="text-xs text-muted-foreground/30 italic">Add description...</span>
-        )}
-      </div>
-
-      {/* Issues Section */}
-      <div className="flex flex-col gap-3 border-t border-border/30 pt-6">
-        <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Issues</h3>
-        <ProjectIssuesTable projectId={project.linearId} />
-      </div>
-    </div>
+      </DrawerContent>
+    </Drawer>
   )
 }

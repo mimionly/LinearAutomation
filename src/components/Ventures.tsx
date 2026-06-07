@@ -1,12 +1,14 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import {
-  Layout,
   Plus,
   CheckCircle2,
-  Target,
+  Mountain,
   ChevronDown,
-  UserMinus,
+  User,
   Check,
+  Calendar as CalendarIcon,
+  CircleDashed,
+  Play,
 } from 'lucide-react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '../../convex/_generated/api';
@@ -15,24 +17,14 @@ import type { Id } from '../../convex/_generated/dataModel';
 // ─── shadcn/ui components ─────────────────────────────────────────
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-  DialogDescription,
-  DialogClose,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { Calendar } from '@/components/ui/calendar';
 
 // ─── Types ─────────────────────────────────────────────────────────
 interface Member {
   _id: string;
   name: string;
+  email?: string;
+  status?: string;
   avatarUrl?: string;
   teams?: { name: string; iconEmoji: string }[];
 }
@@ -43,7 +35,7 @@ const MemberAvatar = ({ src, alt, size = 20 }: { src?: string; alt: string; size
     {src ? (
       <AvatarImage src={src} alt={alt} className="object-cover" />
     ) : null}
-    <AvatarFallback className="text-[10px] bg-gray-800 text-gray-400">
+    <AvatarFallback className="text-[10px] bg-zinc-100 text-zinc-500 dark:bg-gray-800 dark:text-gray-400">
       {alt.slice(0, 2).toUpperCase()}
     </AvatarFallback>
   </Avatar>
@@ -59,8 +51,8 @@ const TabButton = ({ label, active, onClick }: { label: string; active: boolean;
       rounded-full px-3 py-1 text-sm font-medium transition-colors
       ${
         active
-          ? 'border-gray-400 text-gray-200 bg-transparent hover:bg-gray-800/40'
-          : 'border-transparent text-gray-500 hover:text-gray-300 hover:border-gray-700 hover:bg-transparent'
+          ? 'border-zinc-400 text-zinc-900 dark:border-gray-400 dark:text-gray-200 bg-transparent hover:bg-zinc-100 dark:hover:bg-gray-800/40'
+          : 'border-transparent text-zinc-500 hover:text-zinc-900 dark:text-gray-500 dark:hover:text-gray-300 hover:border-zinc-200 dark:hover:border-gray-700 hover:bg-transparent'
       }
     `}
   >
@@ -73,12 +65,16 @@ const OwnerDropdown = ({
   owner, 
   members, 
   onSelect, 
-  disabled 
+  disabled,
+  placeholder = "No owner",
+  className = ""
 }: { 
   owner: Member | null; 
   members: Member[]; 
   onSelect: (member: Member | null) => void; 
   disabled: boolean;
+  placeholder?: string;
+  className?: string;
 }) => {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -102,73 +98,383 @@ const OwnerDropdown = ({
   return (
     <div ref={ref} className="relative">
       <button
+        type="button"
         disabled={disabled}
         onClick={() => { setOpen((o) => !o); setQuery(''); }}
-        className={`flex items-center gap-1.5 rounded-md px-2 py-1 text-sm transition-colors
-          ${disabled ? 'cursor-default' : 'hover:bg-gray-800/60'}`}
+        className={`flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium transition-colors
+          ${disabled ? 'cursor-default' : 'hover:bg-zinc-100 dark:hover:bg-gray-800/60'} ${className}`}
       >
         {owner ? (
           <>
             <MemberAvatar src={owner.avatarUrl} alt={owner.name} size={18} />
-            <span className="text-gray-300">{owner.name}</span>
+            <span className="text-zinc-800 dark:text-gray-300">{owner.name}</span>
           </>
         ) : (
-          <span className="text-gray-500">No owner</span>
+          <span className="text-gray-500">{placeholder}</span>
         )}
         {!disabled && <ChevronDown className="h-3 w-3 text-gray-600" />}
       </button>
 
       {open && !disabled && (
-        <div className="absolute right-0 top-full z-50 mt-1.5 w-56 overflow-hidden rounded-xl border border-gray-700/60 bg-gray-900 shadow-xl">
-          <div className="border-b border-gray-800 px-3 py-2">
+        <div className="absolute left-0 top-full z-50 mt-1.5 w-60 overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#151516] shadow-xl p-1">
+          <div className="px-2.5 py-1.5 border-b border-zinc-200 dark:border-zinc-800/40">
             <input
               autoFocus
               type="text"
-              placeholder="Search members…"
+              placeholder="Set owner..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="w-full bg-transparent text-sm text-gray-200 placeholder-gray-600 outline-none"
+              className="w-full bg-transparent text-xs text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 dark:placeholder-zinc-500 outline-none border-none"
             />
           </div>
 
-          <ul className="max-h-52 overflow-y-auto py-1">
-            {filtered.length === 0 && (
-              <li className="px-3 py-2 text-xs text-gray-600">No members found</li>
+          <ul className="max-h-52 overflow-y-auto mt-1 no-scrollbar">
+            {/* "No owner" option at the top of the list, filtered by query */}
+            {(!query || 'no owner'.includes(query.toLowerCase())) && (
+              <li
+                onClick={() => { onSelect(null); setOpen(false); }}
+                className={`flex cursor-pointer items-center gap-2.5 px-2 py-1.5 text-xs transition-colors rounded-md mx-0.5 hover:bg-zinc-100 dark:hover:bg-zinc-800/60 ${
+                  !owner ? 'text-zinc-900 bg-zinc-100 dark:text-white dark:bg-zinc-800/30 font-medium' : 'text-zinc-500 dark:text-zinc-400'
+                }`}
+              >
+                <div className="h-5 w-5 rounded-full bg-zinc-200 dark:bg-zinc-800/50 flex items-center justify-center text-zinc-500 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700/20 shrink-0">
+                  <User className="h-3 w-3" />
+                </div>
+                <span className="flex-1">No owner</span>
+                <span className="text-[10px] text-zinc-500 bg-zinc-100 dark:bg-zinc-800/50 px-1.5 py-0.5 rounded border border-zinc-200 dark:border-zinc-700/30 font-mono shrink-0">
+                  0
+                </span>
+              </li>
             )}
+
             {filtered.map((m) => {
               const isSelected = owner?._id === m._id;
+              // Check if member is pending invite
+              const isInvited = m.status === 'invited' || m.status === 'pending' || m.email?.includes('invited');
               return (
                 <li
                   key={m._id}
                   onClick={() => { onSelect(m); setOpen(false); }}
-                  className={`flex cursor-pointer items-center gap-2.5 px-3 py-2 text-sm transition-colors hover:bg-gray-800/60 ${isSelected ? 'bg-gray-800/40' : ''}`}
+                  className={`flex cursor-pointer items-center gap-2.5 px-2 py-1.5 text-xs transition-colors rounded-md mx-0.5 hover:bg-zinc-100 dark:hover:bg-zinc-800/60 ${
+                    isSelected ? 'text-zinc-900 bg-zinc-100 dark:text-white dark:bg-zinc-800/30 font-medium' : 'text-zinc-700 dark:text-zinc-300'
+                  }`}
                 >
-                  <MemberAvatar src={m.avatarUrl} alt={m.name} size={22} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-gray-200 font-medium truncate">{m.name}</p>
-                    <div className="flex flex-wrap gap-1 mt-0.5">
-                      {m.teams?.map((t) => (
-                        <span key={`${m._id}-${t.name}`} className="text-[10px] text-gray-500 bg-gray-800 rounded px-1">
-                          {t.iconEmoji} {t.name}
-                        </span>
-                      ))}
-                    </div>
+                  <MemberAvatar src={m.avatarUrl} alt={m.name} size={20} />
+                  <div className="flex-1 min-w-0 flex items-center gap-1.5">
+                    <span className="truncate">{m.name}</span>
+                    {isInvited && (
+                      <span className="text-[9px] text-zinc-500 bg-zinc-100 dark:bg-zinc-800/40 px-1 py-0.5 rounded border border-zinc-200 dark:border-zinc-700/10 shrink-0">
+                        Invited
+                      </span>
+                    )}
                   </div>
-                  {isSelected && <Check className="h-3.5 w-3.5 text-indigo-400 flex-shrink-0" />}
+                  {isSelected && <Check className="h-3 w-3 text-zinc-800 dark:text-zinc-300 flex-shrink-0" />}
                 </li>
               );
             })}
-          </ul>
 
-          <div className="border-t border-gray-800">
-            <button
-              onClick={() => { onSelect(null); setOpen(false); }}
-              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-500 hover:bg-gray-800/60 hover:text-red-400 transition-colors"
-            >
-              <UserMinus className="h-3.5 w-3.5" />
-              No owner
-            </button>
-          </div>
+            {filtered.length === 0 && (!query || !'no owner'.includes(query.toLowerCase())) && (
+              <li className="px-2.5 py-2 text-xs text-zinc-500 italic">No members found</li>
+            )}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+};;
+
+// ─── DateSelectorDropdown component ───────────────────────────────────
+const DateSelectorDropdown = ({
+  selectedDateStr,
+  onSelectDate,
+  disabled
+}: {
+  selectedDateStr: string;
+  onSelectDate: (dateStr: string) => void;
+  disabled: boolean;
+}) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const today = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, []);
+
+  const parsedDate = useMemo(() => {
+    if (!selectedDateStr) return undefined;
+    const [year, month, day] = selectedDateStr.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  }, [selectedDateStr]);
+
+  const handleSelect = (date: Date | undefined) => {
+    if (!date) {
+      onSelectDate('');
+    } else {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      onSelectDate(`${year}-${month}-${day}`);
+    }
+    setOpen(false);
+  };
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        disabled={disabled}
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="flex items-center gap-1.5 rounded-md border border-zinc-200 dark:border-gray-800 bg-zinc-50/50 dark:bg-gray-900/40 hover:bg-zinc-100 dark:hover:bg-gray-850 px-2.5 py-1 text-xs text-zinc-700 dark:text-gray-400 transition-colors"
+      >
+        <CalendarIcon className="h-3.5 w-3.5 text-gray-500" />
+        <span>
+          {selectedDateStr ? (
+            new Date(selectedDateStr).toLocaleDateString(undefined, {
+              month: 'short',
+              day: 'numeric',
+              timeZone: 'UTC'
+            })
+          ) : (
+            'Target date'
+          )}
+        </span>
+      </button>
+
+      {open && !disabled && (
+        <div className="absolute left-0 top-full z-50 mt-1.5 overflow-hidden rounded-xl border border-zinc-200 dark:border-gray-750 bg-white dark:bg-gray-950 shadow-xl p-1">
+          <Calendar
+            mode="single"
+            selected={parsedDate}
+            onSelect={handleSelect}
+            disabled={{ before: today }}
+          />
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ─── VentureDateDropdown component ───────────────────────────────────
+const VentureDateDropdown = ({
+  selectedDateStr,
+  onSelectDate,
+  disabled,
+  className = ""
+}: {
+  selectedDateStr: string | undefined;
+  onSelectDate: (dateStr: string) => void;
+  disabled: boolean;
+  className?: string;
+}) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const today = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, []);
+
+  const parsedDate = useMemo(() => {
+    if (!selectedDateStr) return undefined;
+    if (selectedDateStr.includes('-')) {
+      const parts = selectedDateStr.split('-');
+      if (parts.length === 3) {
+        const [y, m, d] = parts.map(Number);
+        const date = new Date(y, m - 1, d);
+        if (!isNaN(date.getTime())) return date;
+      }
+    }
+    const spaceParts = selectedDateStr.split(' ');
+    if (spaceParts.length === 2) {
+      const yymm = spaceParts[0];
+      const d = Number(spaceParts[1]);
+      if (yymm.length === 6) {
+        const y = Number(yymm.slice(0, 4));
+        const m = Number(yymm.slice(4, 6));
+        const date = new Date(y, m - 1, d);
+        if (!isNaN(date.getTime())) return date;
+      }
+    }
+    const fallbackDate = new Date(selectedDateStr);
+    return isNaN(fallbackDate.getTime()) ? undefined : fallbackDate;
+  }, [selectedDateStr]);
+
+  const handleSelect = (date: Date | undefined) => {
+    if (!date) {
+      onSelectDate('');
+    } else {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      onSelectDate(`${year}-${month}-${day}`);
+    }
+    setOpen(false);
+  };
+
+  const formattedDate = useMemo(() => {
+    if (!selectedDateStr) return '--';
+    let date: Date | undefined;
+    if (selectedDateStr.includes('-')) {
+      const parts = selectedDateStr.split('-');
+      if (parts.length === 3) {
+        const [y, m, d] = parts.map(Number);
+        date = new Date(Date.UTC(y, m - 1, d));
+      }
+    } else {
+      const spaceParts = selectedDateStr.split(' ');
+      if (spaceParts.length === 2) {
+        const yymm = spaceParts[0];
+        const d = Number(spaceParts[1]);
+        if (yymm.length === 6) {
+          const y = Number(yymm.slice(0, 4));
+          const m = Number(yymm.slice(4, 6));
+          date = new Date(Date.UTC(y, m - 1, d));
+        }
+      }
+    }
+    if (!date || isNaN(date.getTime())) {
+      date = new Date(selectedDateStr);
+    }
+    if (isNaN(date.getTime())) return '--';
+    return date.toLocaleDateString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      timeZone: 'UTC'
+    });
+  }, [selectedDateStr]);
+
+  return (
+    <div ref={ref} className="relative inline-block text-right w-full">
+      <button
+        disabled={disabled}
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className={`flex items-center justify-end gap-1.5 rounded-md px-2 py-1 text-xs transition-colors w-full
+          ${disabled ? 'cursor-default' : 'hover:bg-zinc-100 dark:hover:bg-gray-800/60'}
+          ${selectedDateStr ? 'text-zinc-800 dark:text-gray-300' : 'text-zinc-500 dark:text-gray-600 font-medium'} ${className}`}
+      >
+        <CalendarIcon
+          className={`h-3.5 w-3.5 text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity duration-200 ${
+            open ? 'opacity-100' : ''
+          }`}
+        />
+        <span>{formattedDate}</span>
+      </button>
+
+      {open && !disabled && (
+        <div className="absolute right-0 top-full z-50 mt-1.5 overflow-hidden rounded-xl border border-zinc-200 dark:border-gray-750 bg-white dark:bg-gray-950 shadow-xl p-1">
+          <Calendar
+            mode="single"
+            selected={parsedDate}
+            onSelect={handleSelect}
+            disabled={{ before: today }}
+          />
+          {selectedDateStr && (
+            <div className="border-t border-zinc-200 dark:border-gray-800/60 p-1">
+              <button
+                type="button"
+                onClick={() => handleSelect(undefined)}
+                className="w-full rounded-md py-1 text-center text-[10px] font-medium text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 dark:text-gray-500 dark:hover:text-gray-300 dark:hover:bg-gray-850 transition-colors"
+              >
+                Clear date
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ─── StatusDropdown component ───────────────────────────────────────
+const StatusDropdown = ({
+  status,
+  onSelect,
+  disabled,
+  className = ""
+}: {
+  status: "active" | "planned" | "completed";
+  onSelect: (status: "active" | "planned" | "completed") => void;
+  disabled: boolean;
+  className?: string;
+}) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const config = {
+    planned: { label: "Planned", icon: <CircleDashed className="h-3.5 w-3.5 text-gray-500" />, color: "text-gray-400" },
+    active: { label: "Active", icon: <Play className="h-3.5 w-3.5 text-emerald-500 fill-emerald-500/20" />, color: "text-emerald-400" },
+    completed: { label: "Completed", icon: <CheckCircle2 className="h-3.5 w-3.5 text-indigo-400" />, color: "text-indigo-400" },
+  };
+
+  const current = config[status] || config.planned;
+
+  const handleSelectStatus = (newStatus: "active" | "planned" | "completed") => {
+    onSelect(newStatus);
+    setOpen(false);
+  };
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => setOpen((o) => !o)}
+        className={`flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium transition-colors
+          ${disabled ? 'cursor-default' : 'hover:bg-zinc-100 dark:hover:bg-gray-800/60'} ${className}`}
+      >
+        {current.icon}
+        <span className="text-zinc-800 dark:text-gray-300">{current.label}</span>
+        {!disabled && <ChevronDown className="h-3 w-3 text-gray-600" />}
+      </button>
+
+      {open && !disabled && (
+        <div className="absolute right-0 top-full z-50 mt-1.5 w-36 overflow-hidden rounded-xl border border-zinc-200 dark:border-gray-700/60 bg-white dark:bg-gray-900 shadow-xl py-1">
+          {(["planned", "active", "completed"] as const).map((s) => {
+            const isSelected = status === s;
+            const item = config[s];
+            return (
+              <button
+                key={s}
+                type="button"
+                onClick={() => handleSelectStatus(s)}
+                className={`flex w-full items-center gap-2 px-3 py-2 text-left text-xs transition-colors hover:bg-zinc-100 dark:hover:bg-gray-800/60
+                  ${isSelected ? 'bg-zinc-100 text-zinc-900 dark:bg-gray-800/40 dark:text-gray-200 font-medium' : 'text-zinc-500 dark:text-gray-400'}`}
+              >
+                {item.icon}
+                <span className="flex-1">{item.label}</span>
+                {isSelected && <Check className="h-3 w-3 text-indigo-400" />}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
@@ -177,9 +483,10 @@ const OwnerDropdown = ({
 
 // ─── Column widths ──────────────────────────────────────────────────
 const COL = {
-  owner:    'w-36',
-  target:   'w-24',
-  projects: 'w-32',
+  status:   'w-32',
+  owner:    'w-40',
+  target:   'w-28',
+  projects: 'w-36',
 };
 
 // ─── Main Page ─────────────────────────────────────────────────────
@@ -192,6 +499,7 @@ export default function Ventures() {
   const [newSummary, setNewSummary] = useState('');
   const [newDeadline, setNewDeadline] = useState('');
   const [newOwner, setNewOwner] = useState<Member | null>(null);
+  const [newStatus, setNewStatus] = useState<'active' | 'planned' | 'completed'>('planned');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -201,11 +509,30 @@ export default function Ventures() {
   const members = useQuery(api.members.listMembers) as Member[] | undefined;
 
   const updateOwner = useMutation(api.ventures.updateOwner);
+  const updateStatus = useMutation(api.ventures.updateStatus);
+  const updateTargetDeadline = useMutation(api.ventures.updateTargetDeadline);
   const createVenture = useMutation(api.ventures.createVenture);
+
+  // Sync newStatus with current activeTab when creating
+  useEffect(() => {
+    if (isCreateOpen) {
+      setNewStatus(
+        activeTab === 'Active' ? 'active' : activeTab === 'Completed' ? 'completed' : 'planned'
+      );
+    }
+  }, [isCreateOpen, activeTab]);
 
   const handleOwnerSelect = useCallback(async (ventureId: Id<"ventures">, member: Member | null) => {
     await updateOwner({ ventureId, ownerId: member?._id as Id<"members"> ?? null });
   }, [updateOwner]);
+
+  const handleStatusSelect = useCallback(async (ventureId: Id<"ventures">, status: "active" | "planned" | "completed") => {
+    await updateStatus({ ventureId, status });
+  }, [updateStatus]);
+
+  const handleTargetDeadlineSelect = useCallback(async (ventureId: Id<"ventures">, dateStr: string) => {
+    await updateTargetDeadline({ ventureId, targetDeadline: dateStr || undefined });
+  }, [updateTargetDeadline]);
 
   const handleCreateSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -221,9 +548,7 @@ export default function Ventures() {
         summary: newSummary.trim() || undefined,
         targetDeadline: newDeadline || undefined,
         ownerId: newOwner?._id as Id<"members"> ?? null,
-        status: activeTab === 'Planned' || activeTab === 'Completed' || activeTab === 'Active'
-          ? (activeTab.toLowerCase() as "active" | "planned" | "completed")
-          : 'planned',
+        status: newStatus,
       });
       setNewName('');
       setNewSummary('');
@@ -235,7 +560,7 @@ export default function Ventures() {
     } finally {
       setIsSubmitting(false);
     }
-  }, [newName, newSummary, newDeadline, newOwner, activeTab, createVenture]);
+  }, [newName, newSummary, newDeadline, newOwner, newStatus, createVenture]);
 
 
   const filteredVentures = useMemo(() => {
@@ -260,102 +585,19 @@ if (dbVentures === undefined || members === undefined) {
 
 
   return (
-    <div className="flex h-screen w-full flex-col text-gray-300">
-      <header className="flex items-center justify-between border-b border-gray-800/60 px-5 py-3">
-        <div className="flex items-center gap-3">
-          <Layout className="h-5 w-5 text-gray-500" />
-          <h1 className="text-[15px] font-semibold text-gray-200">Ventures</h1>
-        </div>
+    <div className="flex h-screen w-full flex-col text-zinc-800 dark:text-gray-300">
+      <header className="flex items-center justify-between border-b border-zinc-200 dark:border-gray-800/60 px-5 py-3">
+        <h1 className="text-[15px] font-semibold text-zinc-900 dark:text-gray-200">Ventures</h1>
         {isAdmin && (
-          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-            <DialogTrigger >
-              <Button 
-                variant="ghost" 
-                size="sm"
-                className="group inline-flex items-center gap-1.5 text-sm text-stone-400 hover:text-stone-600 dark:text-stone-500 dark:hover:text-stone-300 transition-colors duration-300"
-              >
-                <span>Create new venture</span>
-                <Plus className="h-3 w-3 opacity-60 group-hover:opacity-100 transition-all duration-300 group-hover:rotate-90" />
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-md border border-gray-800/80 bg-gray-900/90 backdrop-blur-md p-6 text-gray-200 rounded-xl shadow-2xl animate-in fade-in zoom-in-95 duration-150">
-              <DialogHeader className="mb-4">
-                <DialogTitle className="text-[17px] font-semibold text-gray-100">Create new venture</DialogTitle>
-                <DialogDescription className="text-xs text-gray-500">
-                  Define a new initiative, set a target deadline, and assign an owner.
-                </DialogDescription>
-              </DialogHeader>
-
-              <form onSubmit={handleCreateSubmit} className="space-y-4">
-                {/* Venture Name */}
-                <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="venture-name" className="text-xs text-gray-400 font-medium">Venture name</Label>
-                  <Input
-                    id="venture-name"
-                    required
-                    value={newName}
-                    onChange={(e) => setNewName(e.target.value)}
-                    placeholder="e.g. Q3 Marketing Campaign"
-                    className="w-full bg-gray-950/40 border-gray-800 focus-visible:border-indigo-500 focus-visible:ring-indigo-500/20 text-gray-200"
-                  />
-                </div>
-
-                {/* Summary */}
-                <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="venture-summary" className="text-xs text-gray-400 font-medium">Summary</Label>
-                  <Textarea
-                    id="venture-summary"
-                    value={newSummary}
-                    onChange={(e) => setNewSummary(e.target.value)}
-                    placeholder="Short description of the venture goals..."
-                    className="w-full bg-gray-950/40 border-gray-800 focus-visible:border-indigo-500 focus-visible:ring-indigo-500/20 text-gray-200 resize-none min-h-20"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  {/* Target Deadline Date */}
-                  <div className="flex flex-col gap-1.5">
-                    <Label htmlFor="venture-deadline" className="text-xs text-gray-400 font-medium">Target deadline date</Label>
-                    <Input
-                      id="venture-deadline"
-                      type="date"
-                      value={newDeadline}
-                      onChange={(e) => setNewDeadline(e.target.value)}
-                      className="w-full bg-gray-950/40 border-gray-800 focus-visible:border-indigo-500 focus-visible:ring-indigo-500/20 text-gray-200 [color-scheme:dark]"
-                    />
-                  </div>
-
-                  {/* Venture Lead / Owner */}
-                  <div className="flex flex-col gap-1.5">
-                    <Label className="text-xs text-gray-400 font-medium">Venture lead/owner</Label>
-                    <div className="flex justify-start">
-                      <OwnerDropdown
-                        owner={newOwner}
-                        members={members ?? []}
-                        onSelect={setNewOwner}
-                        disabled={false}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {error && (
-                  <p className="text-xs text-red-400 bg-red-950/30 border border-red-900/30 rounded-lg p-2.5">{error}</p>
-                )}
-
-                <DialogFooter className="mt-6 pt-4 border-t border-gray-800/40">
-                  <DialogClose>
-                    <Button variant="outline" size="sm" type="button" disabled={isSubmitting} className="border-gray-800 text-gray-400 hover:text-gray-200 hover:bg-gray-800/40">
-                      Cancel
-                    </Button>
-                  </DialogClose>
-                  <Button size="sm" type="submit" disabled={isSubmitting} className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium">
-                    {isSubmitting ? 'Creating...' : 'Create venture'}
-                  </Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => setIsCreateOpen(true)}
+            className="group inline-flex items-center gap-1 text-xs text-stone-400 hover:text-stone-600 dark:text-stone-500 dark:hover:text-stone-300 transition-colors duration-300 h-auto p-0"
+          >
+            <Plus className="h-3 w-3 opacity-60 group-hover:opacity-100 transition-all duration-300 group-hover:rotate-90" />
+            <span>Create new venture</span>
+          </Button>
         )}
       </header>
 
@@ -373,75 +615,234 @@ if (dbVentures === undefined || members === undefined) {
           </div>
         </div>
 
-        <div className="flex items-center border-b border-gray-800/60 px-3 py-2 text-xs font-medium text-gray-500">
+        <div className="hidden md:flex items-center gap-4 md:gap-6 border-b border-zinc-200 dark:border-gray-800/60 px-3 py-2 text-xs font-medium text-zinc-500 dark:text-gray-500">
           <div className="flex flex-1 items-center gap-3">
             <div className="h-4 w-4" />
             <div className="w-6" />
             <span>Name</span>
           </div>
+          <div className={`${COL.status} text-right`}>Status</div>
           <div className={`${COL.owner} text-right`}>Owner</div>
           <div className={`${COL.target} text-right`}>Target</div>
           <div className={`${COL.projects} text-right`}>Projects</div>
         </div>
 
-        {filteredVentures.length === 0 ? (
+        {isCreateOpen && (
+          <form onSubmit={handleCreateSubmit} className="border border-zinc-200 dark:border-gray-800/60 bg-zinc-50/50 dark:bg-gray-900/10 rounded-lg p-3.5 mt-2 mb-4 flex flex-col gap-3 animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="flex items-start gap-3">
+              <div className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-500/10 text-indigo-400 mt-0.5">
+                <Mountain className="h-3 w-3" />
+              </div>
+              <div className="flex-1 min-w-0 flex flex-col">
+                <input
+                  type="text"
+                  required
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  placeholder="New venture name"
+                  className="w-full bg-transparent text-sm font-medium text-zinc-900 dark:text-gray-200 placeholder-zinc-400 dark:placeholder-gray-600 outline-none border-none p-0 focus:ring-0"
+                  autoFocus
+                />
+                <input
+                  type="text"
+                  value={newSummary}
+                  onChange={(e) => setNewSummary(e.target.value)}
+                  placeholder="Add a short summary..."
+                  className="w-full bg-transparent text-xs text-zinc-500 dark:text-gray-500 placeholder-zinc-400 dark:placeholder-gray-600 outline-none border-none p-0 mt-1 focus:ring-0"
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between pl-0 sm:pl-8 gap-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <StatusDropdown
+                  status={newStatus}
+                  onSelect={setNewStatus}
+                  disabled={false}
+                  className="border border-zinc-200 dark:border-gray-800 bg-zinc-50/50 dark:bg-gray-900/40 hover:bg-zinc-100 dark:hover:bg-gray-850 text-zinc-800 dark:text-zinc-300"
+                />
+
+                <DateSelectorDropdown
+                  selectedDateStr={newDeadline}
+                  onSelectDate={setNewDeadline}
+                  disabled={false}
+                />
+
+                <OwnerDropdown
+                  owner={newOwner}
+                  members={members ?? []}
+                  onSelect={setNewOwner}
+                  disabled={false}
+                  placeholder="Owner"
+                  className="border border-zinc-200 dark:border-gray-800 bg-zinc-50/50 dark:bg-gray-900/40 hover:bg-zinc-100 dark:hover:bg-gray-850 text-zinc-800 dark:text-zinc-300"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3 shrink-0">
+                <button
+                  type="button"
+                  disabled={isSubmitting}
+                  onClick={() => {
+                    setNewName('');
+                    setNewSummary('');
+                    setNewDeadline('');
+                    setNewOwner(null);
+                    setIsCreateOpen(false);
+                  }}
+                  className="text-xs text-zinc-500 hover:text-zinc-900 dark:text-gray-500 dark:hover:text-gray-300 font-medium transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting || !newName.trim() || !newDeadline || !newOwner}
+                  className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium px-3 py-1 rounded text-xs transition-colors"
+                >
+                  {isSubmitting ? 'Creating...' : 'Create'}
+                </button>
+              </div>
+            </div>
+            {error && (
+              <p className="text-xs text-red-400 bg-red-950/30 border border-red-900/30 rounded-lg p-2 ml-8">{error}</p>
+            )}
+          </form>
+        )}
+
+        {filteredVentures.length === 0 && !isCreateOpen ? (
           <div className="flex items-center justify-center py-12 text-sm text-gray-600">
             No {activeTab.toLowerCase()} ventures found.
           </div>
         ) : (
-          filteredVentures.map((venture: any) => {
-            const owner = members.find((m) => m._id === venture.ownerId) ?? null;
+          <>
+            {/* Mobile Card List */}
+            <div className="flex flex-col gap-3 md:hidden">
+              {filteredVentures.map((venture: any) => {
+                const owner = members.find((m) => m._id === venture.ownerId) ?? null;
 
-            return (
-              <div key={venture._id} className="group flex items-center rounded-lg px-3 py-2.5 hover:bg-gray-800/40">
-                <div className="flex flex-1 items-center gap-3">
-                  <input
-                    type="checkbox"
-                    className="h-4 w-4 rounded border border-gray-700 bg-transparent accent-indigo-500 cursor-pointer"
-                  />
-                  <div className="flex h-6 w-6 items-center justify-center rounded-md">
-                    <Target className="h-3.5 w-3.5 text-indigo-400" />
+                return (
+                  <div key={venture._id} className="flex flex-col gap-3 rounded-xl border border-zinc-200 dark:border-gray-800/60 bg-zinc-50/50 dark:bg-gray-900/10 p-4 shadow-sm">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-2.5 min-w-0">
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 rounded border border-gray-700 bg-transparent accent-indigo-500 cursor-pointer mt-1 shrink-0"
+                        />
+                        <div className="flex h-6 w-6 items-center justify-center rounded-md bg-indigo-500/10 shrink-0 mt-0.5">
+                          <Mountain className="h-3.5 w-3.5 text-indigo-400" />
+                        </div>
+                        <div className="flex flex-col min-w-0">
+                          <span className="text-sm font-semibold text-zinc-900 dark:text-gray-200 truncate">{venture.name}</span>
+                          {venture.summary && (
+                            <span className="text-xs text-zinc-500 dark:text-gray-500 mt-0.5 line-clamp-2" title={venture.summary}>
+                              {venture.summary}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1 bg-zinc-100 dark:bg-gray-800/40 px-2 py-0.5 rounded text-xs text-zinc-700 dark:text-gray-400 shrink-0 border border-zinc-200 dark:border-gray-800">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-indigo-400" />
+                        <span>{venture.projects ?? 0}</span>
+                      </div>
+                    </div>
+
+                    <div className="border-t border-zinc-200 dark:border-gray-800/40 my-1" />
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[10px] text-zinc-500 dark:text-gray-500 font-semibold uppercase tracking-wider">Status</span>
+                        <StatusDropdown
+                          status={venture.status}
+                          disabled={!isAdmin}
+                          onSelect={(status) => handleStatusSelect(venture._id as Id<"ventures">, status)}
+                          className="border border-zinc-200 dark:border-gray-800 bg-zinc-50/50 dark:bg-gray-900/40 hover:bg-zinc-100 dark:hover:bg-gray-850 text-zinc-800 dark:text-zinc-300 justify-between w-full"
+                        />
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[10px] text-zinc-500 dark:text-gray-500 font-semibold uppercase tracking-wider">Owner</span>
+                        <OwnerDropdown
+                          owner={owner}
+                          members={members}
+                          disabled={!isAdmin}
+                          onSelect={(member) => handleOwnerSelect(venture._id as Id<"ventures">, member)}
+                          className="border border-zinc-200 dark:border-gray-800 bg-zinc-50/50 dark:bg-gray-900/40 hover:bg-zinc-100 dark:hover:bg-gray-850 text-zinc-800 dark:text-zinc-300 justify-between w-full font-medium"
+                        />
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[10px] text-zinc-500 dark:text-gray-500 font-semibold uppercase tracking-wider">Target Date</span>
+                        <VentureDateDropdown
+                          selectedDateStr={venture.targetDeadline}
+                          disabled={!isAdmin}
+                          onSelectDate={(dateStr) => handleTargetDeadlineSelect(venture._id as Id<"ventures">, dateStr)}
+                          className="border border-zinc-200 dark:border-gray-800 bg-zinc-50/50 dark:bg-gray-900/40 hover:bg-zinc-100 dark:hover:bg-gray-850 text-zinc-800 dark:text-zinc-300 justify-between w-full"
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex flex-col">
-                    <span className="text-sm font-medium text-gray-200">{venture.name}</span>
-                    {venture.summary && (
-                      <span className="text-xs text-gray-500 truncate max-w-sm mt-0.5" title={venture.summary}>
-                        {venture.summary}
-                      </span>
-                    )}
+                );
+              })}
+            </div>
+
+            {/* Desktop Row List */}
+            <div className="hidden md:flex flex-col">
+              {filteredVentures.map((venture: any) => {
+                const owner = members.find((m) => m._id === venture.ownerId) ?? null;
+
+                return (
+                  <div key={venture._id} className="group flex items-center gap-4 md:gap-6 rounded-lg px-3 py-2.5 hover:bg-zinc-100/60 dark:hover:bg-gray-800/40">
+                    <div className="flex flex-1 items-center gap-3">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 rounded border border-gray-700 bg-transparent accent-indigo-500 cursor-pointer"
+                      />
+                      <div className="flex h-6 w-6 items-center justify-center rounded-md">
+                        <Mountain className="h-3.5 w-3.5 text-indigo-400" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-zinc-900 dark:text-gray-200">{venture.name}</span>
+                        {venture.summary && (
+                          <span className="text-xs text-zinc-500 dark:text-gray-500 truncate max-w-sm mt-0.5" title={venture.summary}>
+                            {venture.summary}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className={`flex ${COL.status} items-center justify-end`}>
+                      <StatusDropdown
+                        status={venture.status}
+                        disabled={!isAdmin}
+                        onSelect={(status) => handleStatusSelect(venture._id as Id<"ventures">, status)}
+                      />
+                    </div>
+
+                    <div className={`flex ${COL.owner} items-center justify-end`}>
+                      <OwnerDropdown
+                        owner={owner}
+                        members={members}
+                        disabled={!isAdmin} 
+                        onSelect={(member) => handleOwnerSelect(venture._id as Id<"ventures">, member)}
+                      />
+                    </div>
+
+                    <div className={`${COL.target} flex items-center justify-end`}>
+                      <VentureDateDropdown
+                        selectedDateStr={venture.targetDeadline}
+                        disabled={!isAdmin}
+                        onSelectDate={(dateStr) => handleTargetDeadlineSelect(venture._id as Id<"ventures">, dateStr)}
+                      />
+                    </div>
+
+                    <div className={`flex ${COL.projects} items-center justify-end gap-1.5`}>
+                      <CheckCircle2 className="h-4 w-4 text-indigo-400" />
+                      <span className="text-sm text-zinc-600 dark:text-gray-400">{venture.projects ?? 0}</span>
+                    </div>
                   </div>
-                </div>
-
-                <div className={`flex ${COL.owner} items-center justify-end`}>
-                  <OwnerDropdown
-                    owner={owner}
-                    members={members}
-
-                    disabled={!isAdmin} 
-                   onSelect={(member) => handleOwnerSelect(venture._id as Id<"ventures">, member)}
-                  />
-                </div>
-
-                <div className={`${COL.target} text-right text-sm text-gray-400`}>
-                  {venture.targetDeadline ? (
-                    new Date(venture.targetDeadline).toLocaleDateString(undefined, {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
-                      timeZone: 'UTC'
-                    })
-                  ) : (
-                    <span className="text-gray-600">—</span>
-                  )}
-                </div>
-
-                <div className={`flex ${COL.projects} items-center justify-end gap-1.5`}>
-                  <CheckCircle2 className="h-4 w-4 text-indigo-400" />
-                  <span className="text-sm text-gray-400">{venture.projects ?? 0}</span>
-                </div>
-              </div>
-            );
-          })
+                );
+              })}
+            </div>
+          </>
         )}
       </main>
     </div>

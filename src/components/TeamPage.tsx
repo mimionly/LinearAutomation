@@ -352,7 +352,7 @@ function TeamDetailsView({ team, isAdmin, onBack }: TeamDetailsViewProps) {
       </div>
 
       {/* Hero */}
-      <div className="relative overflow-hidden  bg-card p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="relative overflow-hidden bg-card p-4 sm:p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 rounded-xl border">
         <div className="flex items-start gap-4">
           <TeamIcon emoji={team.iconEmoji ?? " "} size="lg" />
           <div className="flex flex-col min-w-0">
@@ -360,7 +360,7 @@ function TeamDetailsView({ team, isAdmin, onBack }: TeamDetailsViewProps) {
               <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground truncate">
                 {team.name}
               </h1>
-              <span className="inline-flex items-center rounded-md border bg-muted/40 px-2 py-0.5 text-xs font-mono font-semibold text-muted-foreground uppercase tracking-widest">
+              <span className="inline-flex items-center border-l-2 border-indigo-500 bg-indigo-500/10 px-2 py-0.5 text-[10px] sm:text-xs font-mono font-bold text-indigo-300 uppercase tracking-widest shrink-0">
                 {team.identifier}
               </span>
             </div>
@@ -372,8 +372,8 @@ function TeamDetailsView({ team, isAdmin, onBack }: TeamDetailsViewProps) {
           </div>
         </div>
 
-        <div className="flex items-center gap-3 self-end md:self-center shrink-0">
-          <span className="text-xs bg-muted text-muted-foreground px-3 py-1 font-medium">
+        <div className="flex items-center justify-between md:justify-start gap-3 w-full md:w-auto md:self-center shrink-0">
+          <span className="text-xs bg-muted text-muted-foreground px-3 py-1 font-medium rounded">
             {members.length} {members.length === 1 ? "member" : "members"}
           </span>
           {isAdmin && <ManageTeamMembersDialog team={team} isAdmin={isAdmin} />}
@@ -401,7 +401,105 @@ function TeamDetailsView({ team, isAdmin, onBack }: TeamDetailsViewProps) {
           </div>
         )}
 
-        <div className="overflow-hidden rounded-xl border shadow-sm bg-card">
+        {/* Mobile members list layout */}
+        <div className="flex flex-col gap-3 sm:hidden">
+          {filtered.length === 0 ? (
+            <div className="h-24 flex items-center justify-center text-sm text-muted-foreground italic bg-card border rounded-xl">
+              No members found.
+            </div>
+          ) : (
+            filtered.map((member) => {
+              const initials = member.name
+                ? member.name.split(/[\s@]/)[0].slice(0, 2).toUpperCase()
+                : "??";
+              return (
+                <div key={member._id} className="flex items-center justify-between p-3 rounded-xl border bg-card shadow-sm gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    {member.avatarUrl ? (
+                      <img src={member.avatarUrl} alt={member.name}
+                        className="h-9 w-9 rounded-full object-cover shrink-0 ring-1 ring-border" />
+                    ) : (
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold ring-1 ring-border">
+                        {initials}
+                      </span>
+                    )}
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-sm font-semibold text-foreground truncate flex items-center gap-1.5">
+                        {member.name}
+                        {member.handle && (
+                          <span className="text-[10px] text-muted-foreground font-normal">{member.handle}</span>
+                        )}
+                      </span>
+                      <span className="text-xs text-muted-foreground truncate">{member.email}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium border ${
+                      member.role === "Admin"
+                        ? "bg-red-500/10 text-red-600 border-red-500/20 dark:bg-red-950/40 dark:text-red-400 dark:border-red-800/40"
+                        : "bg-muted text-muted-foreground border-border"
+                    }`}>
+                      {member.role === "Admin" ? "Admin" : "Member"}
+                    </span>
+                    {isAdmin && (
+                      <Dialog
+                        open={removingMemberId === member._id}
+                        onOpenChange={(open) => {
+                          if (!open) {
+                            setRemovingMemberId(null);
+                            setRemoveError("");
+                          } else {
+                            setRemovingMemberId(member._id);
+                          }
+                        }}
+                      >
+                        <DialogTrigger >
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 shrink-0"
+                            title="Remove member from team"
+                          >
+                            <IconTrash size={15} />
+                            <span className="sr-only">Remove</span>
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="w-[calc(100vw-1.5rem)] max-w-sm rounded-xl">
+                          <DialogHeader>
+                            <DialogTitle className="text-sm font-semibold text-destructive flex items-center gap-2">
+                              <IconAlertCircle size={16} />
+                              Remove from team
+                            </DialogTitle>
+                          </DialogHeader>
+                          <div className="py-3 text-xs text-muted-foreground">
+                            Are you sure you want to remove{" "}
+                            <strong>{member.name}</strong> from{" "}
+                            <strong>{team.name}</strong>?
+                          </div>
+                          <DialogFooter className="flex gap-2 justify-end">
+                            <Button size="sm" variant="outline"
+                              onClick={() => setRemovingMemberId(null)}
+                              disabled={removeLoading}>
+                              Cancel
+                            </Button>
+                            <Button size="sm" variant="destructive"
+                              onClick={() => handleRemoveMember(member._id)}
+                              disabled={removeLoading}>
+                              {removeLoading ? "Removing…" : "Remove"}
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Desktop members table layout */}
+        <div className="hidden sm:block overflow-hidden rounded-xl border shadow-sm bg-card">
           <Table>
             <TableHeader className="bg-muted/30">
               <TableRow>
@@ -668,7 +766,7 @@ function TeamCard({ team, isAdmin }: TeamCardProps) {
               )}
             </div>
           </button>
-          <span className="inline-flex items-center rounded-md border bg-muted/30 px-2 py-0.5 text-[10px] font-mono font-semibold text-muted-foreground uppercase shrink-0">
+          <span className="inline-flex items-center border-l-2 border-indigo-500 bg-indigo-500/10 px-2 py-0.5 text-[9px] sm:text-[10px] font-mono font-bold text-indigo-300 uppercase tracking-widest shrink-0">
             {identifier}
           </span>
         </div>
@@ -974,11 +1072,11 @@ export function TeamPage() {
             Manage workspace teams, identifiers, and members.
           </p>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
           <Button
             disabled={!isAdmin}
             onClick={() => setCreateOpen(true)}
-            className="gap-1.5 w-full sm:w-auto"
+            className="gap-1.5 w-full"
           >
             <IconPlus size={15} />
             Create Team
@@ -1081,7 +1179,7 @@ export function TeamPage() {
                     </TableCell>
 
                     <TableCell className="py-4">
-                      <span className="inline-flex items-center rounded-md border bg-muted/40 px-2.5 py-0.5 text-xs font-mono font-semibold text-muted-foreground uppercase tracking-wider">
+                      <span className="inline-flex items-center border-l-2 border-indigo-500 bg-indigo-500/10 px-2.5 py-0.5 text-[10px] sm:text-xs font-mono font-bold text-indigo-300 uppercase tracking-wider shrink-0">
                         {identifier}
                       </span>
                     </TableCell>
