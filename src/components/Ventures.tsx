@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Plus,
   CheckCircle2,
-  Mountain,
+  Kayak,
   ChevronDown,
   User,
   Check,
@@ -13,11 +14,13 @@ import {
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
+import { useUser, useOrganization } from "@clerk/clerk-react";
 
 // ─── shadcn/ui components ─────────────────────────────────────────
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Calendar } from '@/components/ui/calendar';
+
 
 // ─── Types ─────────────────────────────────────────────────────────
 interface Member {
@@ -61,17 +64,17 @@ const TabButton = ({ label, active, onClick }: { label: string; active: boolean;
 );
 
 // ─── OwnerDropdown component ───────────────────────────────────────
-const OwnerDropdown = ({ 
-  owner, 
-  members, 
-  onSelect, 
+const OwnerDropdown = ({
+  owner,
+  members,
+  onSelect,
   disabled,
   placeholder = "No owner",
   className = ""
-}: { 
-  owner: Member | null; 
-  members: Member[]; 
-  onSelect: (member: Member | null) => void; 
+}: {
+  owner: Member | null;
+  members: Member[];
+  onSelect: (member: Member | null) => void;
   disabled: boolean;
   placeholder?: string;
   className?: string;
@@ -88,7 +91,7 @@ const OwnerDropdown = ({
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const filtered = useMemo(() => 
+  const filtered = useMemo(() =>
     (members ?? []).filter((m) =>
       m.name.toLowerCase().includes(query.toLowerCase())
     ),
@@ -116,7 +119,7 @@ const OwnerDropdown = ({
       </button>
 
       {open && !disabled && (
-        <div className="absolute left-0 top-full z-50 mt-1.5 w-60 overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#151516] shadow-xl p-1">
+        <div className="absolute right-0 sm:right-auto sm:left-0 top-full z-50 mt-1.5 w-60 overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#151516] shadow-xl p-1">
           <div className="px-2.5 py-1.5 border-b border-zinc-200 dark:border-zinc-800/40">
             <input
               autoFocus
@@ -129,7 +132,6 @@ const OwnerDropdown = ({
           </div>
 
           <ul className="max-h-52 overflow-y-auto mt-1 no-scrollbar">
-            {/* "No owner" option at the top of the list, filtered by query */}
             {(!query || 'no owner'.includes(query.toLowerCase())) && (
               <li
                 onClick={() => { onSelect(null); setOpen(false); }}
@@ -149,7 +151,6 @@ const OwnerDropdown = ({
 
             {filtered.map((m) => {
               const isSelected = owner?._id === m._id;
-              // Check if member is pending invite
               const isInvited = m.status === 'invited' || m.status === 'pending' || m.email?.includes('invited');
               return (
                 <li
@@ -181,7 +182,7 @@ const OwnerDropdown = ({
       )}
     </div>
   );
-};;
+};
 
 // ─── DateSelectorDropdown component ───────────────────────────────────
 const DateSelectorDropdown = ({
@@ -251,7 +252,7 @@ const DateSelectorDropdown = ({
       </button>
 
       {open && !disabled && (
-        <div className="absolute left-0 top-full z-50 mt-1.5 overflow-hidden rounded-xl border border-zinc-200 dark:border-gray-750 bg-white dark:bg-gray-950 shadow-xl p-1">
+        <div className="absolute right-0 sm:right-auto sm:left-0 top-full z-50 mt-1.5 overflow-hidden rounded-xl border border-zinc-200 dark:border-gray-750 bg-white dark:bg-gray-950 shadow-xl p-1">
           <Calendar
             mode="single"
             selected={parsedDate}
@@ -394,7 +395,7 @@ const VentureDateDropdown = ({
               <button
                 type="button"
                 onClick={() => handleSelect(undefined)}
-                className="w-full rounded-md py-1 text-center text-[10px] font-medium text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 dark:text-gray-500 dark:hover:text-gray-300 dark:hover:bg-gray-850 transition-colors"
+                className="w-full rounded-md py-1 text-center text-[10px] font-medium text-zinc-500 hover:text-zinc-900  dark:text-gray-500 dark:hover:text-gray-300 dark:hover:bg-gray-850 transition-colors"
               >
                 Clear date
               </button>
@@ -481,16 +482,12 @@ const StatusDropdown = ({
   );
 };
 
-// ─── Column widths ──────────────────────────────────────────────────
-const COL = {
-  status:   'w-32',
-  owner:    'w-40',
-  target:   'w-28',
-  projects: 'w-36',
-};
+// ─── Tab definitions ────────────────────────────────────────────────
+const tabs = ['All','Active', 'Planned', 'Completed' ];
 
 // ─── Main Page ─────────────────────────────────────────────────────
 export default function Ventures() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('Active');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
 
@@ -503,8 +500,16 @@ export default function Ventures() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
-  const currentUser = useQuery(api.members.getCurrentUser); 
-  const isAdmin = currentUser?.role === 'Admin';
+  const { user } = useUser();
+  const { membership } = useOrganization();
+  const currentUser = useQuery(api.members.getCurrentUser);
+  const isClerkAdmin = 
+    user?.publicMetadata?.role === 'admin' || 
+    user?.publicMetadata?.role === 'Admin' ||
+    membership?.role === 'admin' || 
+    membership?.role === 'org:admin' ||
+    user?.organizationMemberships?.some(m => m.role === 'admin' || m.role === 'org:admin');
+  const isAdmin = currentUser?.role === 'Admin' || currentUser?.role === 'admin' || isClerkAdmin;
   const dbVentures = useQuery(api.ventures.listVentures);
   const members = useQuery(api.members.listMembers) as Member[] | undefined;
 
@@ -512,6 +517,13 @@ export default function Ventures() {
   const updateStatus = useMutation(api.ventures.updateStatus);
   const updateTargetDeadline = useMutation(api.ventures.updateTargetDeadline);
   const createVenture = useMutation(api.ventures.createVenture);
+
+  // Filtered ventures based on active tab
+  const filteredVentures = useMemo(() => {
+    if (!dbVentures) return [];
+    if (activeTab === 'All') return dbVentures;
+    return dbVentures.filter((v) => v.status === activeTab.toLowerCase());
+  }, [dbVentures, activeTab]);
 
   // Sync newStatus with current activeTab when creating
   useEffect(() => {
@@ -523,16 +535,16 @@ export default function Ventures() {
   }, [isCreateOpen, activeTab]);
 
   const handleOwnerSelect = useCallback(async (ventureId: Id<"ventures">, member: Member | null) => {
-    await updateOwner({ ventureId, ownerId: member?._id as Id<"members"> ?? null });
-  }, [updateOwner]);
+    await updateOwner({ ventureId, ownerId: member?._id as Id<"members"> ?? null, clerkAdminBypass: isClerkAdmin });
+  }, [updateOwner, isClerkAdmin]);
 
   const handleStatusSelect = useCallback(async (ventureId: Id<"ventures">, status: "active" | "planned" | "completed") => {
-    await updateStatus({ ventureId, status });
-  }, [updateStatus]);
+    await updateStatus({ ventureId, status, clerkAdminBypass: isClerkAdmin });
+  }, [updateStatus, isClerkAdmin]);
 
   const handleTargetDeadlineSelect = useCallback(async (ventureId: Id<"ventures">, dateStr: string) => {
-    await updateTargetDeadline({ ventureId, targetDeadline: dateStr || undefined });
-  }, [updateTargetDeadline]);
+    await updateTargetDeadline({ ventureId, targetDeadline: dateStr || undefined, clerkAdminBypass: isClerkAdmin });
+  }, [updateTargetDeadline, isClerkAdmin]);
 
   const handleCreateSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -549,6 +561,7 @@ export default function Ventures() {
         targetDeadline: newDeadline || undefined,
         ownerId: newOwner?._id as Id<"members"> ?? null,
         status: newStatus,
+        clerkAdminBypass: isClerkAdmin,
       });
       setNewName('');
       setNewSummary('');
@@ -560,50 +573,28 @@ export default function Ventures() {
     } finally {
       setIsSubmitting(false);
     }
-  }, [newName, newSummary, newDeadline, newOwner, newStatus, createVenture]);
-
-
-  const filteredVentures = useMemo(() => {
-  if (!dbVentures) return [];
-  const statusMap: Record<string, string> = {
-    'Active': 'active',
-    'Planned': 'planned',
-    'Completed': 'completed'
-  };
-  const targetStatus = statusMap[activeTab];
-  return targetStatus
-    ? dbVentures.filter((v: any) => v.status === targetStatus)
-    : dbVentures;
-}, [dbVentures, activeTab]);
-
-  const tabs = ['Active', 'Planned', 'Completed'];
-if (dbVentures === undefined || members === undefined) {
-  return <div className="flex h-screen w-full items-center justify-center text-gray-500">Loading ventures...</div>;
-}
-
-
-
+  }, [newName, newSummary, newDeadline, newOwner, newStatus, createVenture, isClerkAdmin]);
 
   return (
-    <div className="flex h-screen w-full flex-col text-zinc-800 dark:text-gray-300">
-      <header className="flex items-center justify-between border-b border-zinc-200 dark:border-gray-800/60 px-5 py-3">
-        <h1 className="text-[15px] font-semibold text-zinc-900 dark:text-gray-200">Ventures</h1>
+    <div className="flex h-full w-full min-h-0 flex-col text-zinc-800 dark:text-gray-300">
+      <header className="flex items-center justify-between border-b border-zinc-200 dark:border-gray-800/60 px-4 sm:px-6 lg:px-8 py-3">
+        <h1 className="text-sm font-semibold text-zinc-900 dark:text-gray-200">Ventures</h1>
         {isAdmin && (
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             size="sm"
             onClick={() => setIsCreateOpen(true)}
-            className="group inline-flex items-center gap-1 text-xs text-stone-400 hover:text-stone-600 dark:text-stone-500 dark:hover:text-stone-300 transition-colors duration-300 h-auto p-0"
+            className="group inline-flex items-center gap-1.5 text-xs text-zinc-400 hover:text-zinc-900 dark:text-gray-500 dark:hover:text-gray-300 transition-all duration-200 h-auto p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800/40 rounded-lg"
           >
-            <Plus className="h-3 w-3 opacity-60 group-hover:opacity-100 transition-all duration-300 group-hover:rotate-90" />
+            <Plus className="h-3.5 w-3.5 opacity-60 group-hover:opacity-100 transition-all duration-300 group-hover:rotate-90 text-indigo-500" />
             <span>Create new venture</span>
           </Button>
         )}
       </header>
 
-      <main className="flex-1 overflow-auto px-5 py-4">
+      <main className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="mb-4 flex items-center justify-between">
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5 bg-zinc-100/50 dark:bg-zinc-900/40 p-1 rounded-full border border-zinc-200/30 dark:border-zinc-800/40 backdrop-blur-md">
             {tabs.map((tab) => (
               <TabButton
                 key={tab}
@@ -615,23 +606,23 @@ if (dbVentures === undefined || members === undefined) {
           </div>
         </div>
 
-        <div className="hidden md:flex items-center gap-4 md:gap-6 border-b border-zinc-200 dark:border-gray-800/60 px-3 py-2 text-xs font-medium text-zinc-500 dark:text-gray-500">
-          <div className="flex flex-1 items-center gap-3">
-            <div className="h-4 w-4" />
+        <div className="hidden md:grid grid-cols-[1.5fr_120px_160px_140px_100px] gap-4 border-b border-zinc-200 dark:border-gray-800/60 px-4 py-2.5 text-[10px] font-bold uppercase tracking-wider text-zinc-405 dark:text-zinc-500">
+          <div className="flex items-center gap-3">
+            <div className="w-4" />
             <div className="w-6" />
             <span>Name</span>
           </div>
-          <div className={`${COL.status} text-right`}>Status</div>
-          <div className={`${COL.owner} text-right`}>Owner</div>
-          <div className={`${COL.target} text-right`}>Target</div>
-          <div className={`${COL.projects} text-right`}>Projects</div>
+          <div className="justify-self-end pr-2">Status</div>
+          <div className="justify-self-end pr-2">Owner</div>
+          <div className="justify-self-end pr-2">Target Date</div>
+          <div className="justify-self-end pr-2">Projects</div>
         </div>
 
         {isCreateOpen && (
-          <form onSubmit={handleCreateSubmit} className="border border-zinc-200 dark:border-gray-800/60 bg-zinc-50/50 dark:bg-gray-900/10 rounded-lg p-3.5 mt-2 mb-4 flex flex-col gap-3 animate-in fade-in slide-in-from-top-2 duration-200">
-            <div className="flex items-start gap-3">
-              <div className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-500/10 text-indigo-400 mt-0.5">
-                <Mountain className="h-3 w-3" />
+          <form onSubmit={handleCreateSubmit} className="border border-zinc-200/80 dark:border-zinc-800/60 bg-zinc-55/40 dark:bg-[#18181c]/30 backdrop-blur-md rounded-xl p-4 mt-2 mb-6 flex flex-col gap-4 animate-in fade-in slide-in-from-top-2 duration-200 shadow-lg shadow-zinc-200/5 dark:shadow-none">
+            <div className="flex items-start gap-3 p-3 rounded-xl bg-white/60 dark:bg-zinc-950/30 border border-zinc-200/40 dark:border-zinc-800/50 focus-within:border-indigo-500/40 focus-within:ring-1 focus-within:ring-indigo-500/10 transition-all duration-250">
+              <div className="flex h-5 w-5 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-500 mt-0.5 shrink-0">
+                <Kayak className="h-3.5 w-3.5" />
               </div>
               <div className="flex-1 min-w-0 flex flex-col">
                 <input
@@ -640,7 +631,7 @@ if (dbVentures === undefined || members === undefined) {
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                   placeholder="New venture name"
-                  className="w-full bg-transparent text-sm font-medium text-zinc-900 dark:text-gray-200 placeholder-zinc-400 dark:placeholder-gray-600 outline-none border-none p-0 focus:ring-0"
+                  className="w-full bg-transparent text-sm font-semibold text-zinc-900 dark:text-gray-100 placeholder-zinc-400 dark:placeholder-zinc-600 outline-none border-none p-0 focus:ring-0"
                   autoFocus
                 />
                 <input
@@ -648,33 +639,31 @@ if (dbVentures === undefined || members === undefined) {
                   value={newSummary}
                   onChange={(e) => setNewSummary(e.target.value)}
                   placeholder="Add a short summary..."
-                  className="w-full bg-transparent text-xs text-zinc-500 dark:text-gray-500 placeholder-zinc-400 dark:placeholder-gray-600 outline-none border-none p-0 mt-1 focus:ring-0"
+                  className="w-full bg-transparent text-xs text-zinc-500 dark:text-gray-500 placeholder-zinc-400 dark:placeholder-zinc-650 outline-none border-none p-0 mt-1 focus:ring-0"
                 />
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between pl-0 sm:pl-8 gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex flex-wrap items-center gap-2">
                 <StatusDropdown
                   status={newStatus}
                   onSelect={setNewStatus}
                   disabled={false}
-                  className="border border-zinc-200 dark:border-gray-800 bg-zinc-50/50 dark:bg-gray-900/40 hover:bg-zinc-100 dark:hover:bg-gray-850 text-zinc-800 dark:text-zinc-300"
+                  className="border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-850 text-zinc-800 dark:text-zinc-300 shadow-sm rounded-lg"
                 />
-
                 <DateSelectorDropdown
                   selectedDateStr={newDeadline}
                   onSelectDate={setNewDeadline}
                   disabled={false}
                 />
-
                 <OwnerDropdown
                   owner={newOwner}
                   members={members ?? []}
                   onSelect={setNewOwner}
                   disabled={false}
                   placeholder="Owner"
-                  className="border border-zinc-200 dark:border-gray-800 bg-zinc-50/50 dark:bg-gray-900/40 hover:bg-zinc-100 dark:hover:bg-gray-850 text-zinc-800 dark:text-zinc-300"
+                  className="border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-850 text-zinc-800 dark:text-zinc-300 shadow-sm rounded-lg"
                 />
               </div>
 
@@ -689,161 +678,164 @@ if (dbVentures === undefined || members === undefined) {
                     setNewOwner(null);
                     setIsCreateOpen(false);
                   }}
-                  className="text-xs text-zinc-500 hover:text-zinc-900 dark:text-gray-500 dark:hover:text-gray-300 font-medium transition-colors"
+                  className="text-xs text-zinc-500 hover:text-zinc-900 dark:text-zinc-450 dark:hover:text-zinc-250 font-medium transition-colors px-2 py-1.5"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting || !newName.trim() || !newDeadline || !newOwner}
-                  className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium px-3 py-1 rounded text-xs transition-colors"
+                  className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold px-4 py-1.5 rounded-lg text-xs transition-all duration-205 shadow-sm shadow-indigo-600/10"
                 >
                   {isSubmitting ? 'Creating...' : 'Create'}
                 </button>
               </div>
             </div>
+
             {error && (
-              <p className="text-xs text-red-400 bg-red-950/30 border border-red-900/30 rounded-lg p-2 ml-8">{error}</p>
+              <p className="text-xs text-red-400 bg-red-955/20 border border-red-900/30 rounded-lg p-2.5 ml-8">{error}</p>
             )}
           </form>
         )}
 
-        {filteredVentures.length === 0 && !isCreateOpen ? (
-          <div className="flex items-center justify-center py-12 text-sm text-gray-600">
-            No {activeTab.toLowerCase()} ventures found.
-          </div>
-        ) : (
-          <>
-            {/* Mobile Card List */}
-            <div className="flex flex-col gap-3 md:hidden">
-              {filteredVentures.map((venture: any) => {
-                const owner = members.find((m) => m._id === venture.ownerId) ?? null;
-
-                return (
-                  <div key={venture._id} className="flex flex-col gap-3 rounded-xl border border-zinc-200 dark:border-gray-800/60 bg-zinc-50/50 dark:bg-gray-900/10 p-4 shadow-sm">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-start gap-2.5 min-w-0">
-                        <input
-                          type="checkbox"
-                          className="h-4 w-4 rounded border border-gray-700 bg-transparent accent-indigo-500 cursor-pointer mt-1 shrink-0"
-                        />
-                        <div className="flex h-6 w-6 items-center justify-center rounded-md bg-indigo-500/10 shrink-0 mt-0.5">
-                          <Mountain className="h-3.5 w-3.5 text-indigo-400" />
-                        </div>
-                        <div className="flex flex-col min-w-0">
-                          <span className="text-sm font-semibold text-zinc-900 dark:text-gray-200 truncate">{venture.name}</span>
-                          {venture.summary && (
-                            <span className="text-xs text-zinc-500 dark:text-gray-500 mt-0.5 line-clamp-2" title={venture.summary}>
-                              {venture.summary}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1 bg-zinc-100 dark:bg-gray-800/40 px-2 py-0.5 rounded text-xs text-zinc-700 dark:text-gray-400 shrink-0 border border-zinc-200 dark:border-gray-800">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-indigo-400" />
-                        <span>{venture.projects ?? 0}</span>
-                      </div>
+        {/* Mobile Card List */}
+        <div className="flex flex-col gap-3.5 md:hidden">
+          {(filteredVentures ?? []).map((venture: any) => {
+            const owner = (members ?? []).find((m) => m._id === venture.ownerId) ?? null;
+            return (
+              <div
+                key={venture._id}
+                onClick={() => navigate(`/ventures/${venture._id}`)}
+                className="flex flex-col gap-3.5 rounded-xl border border-zinc-205 dark:border-zinc-800 bg-white/40 dark:bg-zinc-900/10 backdrop-blur-md p-4 shadow-sm hover:shadow-md hover:border-zinc-300 dark:hover:border-zinc-700/85 hover:scale-[1.008] transition-all duration-300 cursor-pointer"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-2.5 min-w-0">
+                    <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-indigo-500/10 shrink-0 mt-0.5">
+                      <Kayak className="h-3.5 w-3.5 text-indigo-400" />
                     </div>
-
-                    <div className="border-t border-zinc-200 dark:border-gray-800/40 my-1" />
-
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      <div className="flex flex-col gap-1">
-                        <span className="text-[10px] text-zinc-500 dark:text-gray-500 font-semibold uppercase tracking-wider">Status</span>
-                        <StatusDropdown
-                          status={venture.status}
-                          disabled={!isAdmin}
-                          onSelect={(status) => handleStatusSelect(venture._id as Id<"ventures">, status)}
-                          className="border border-zinc-200 dark:border-gray-800 bg-zinc-50/50 dark:bg-gray-900/40 hover:bg-zinc-100 dark:hover:bg-gray-850 text-zinc-800 dark:text-zinc-300 justify-between w-full"
-                        />
-                      </div>
-
-                      <div className="flex flex-col gap-1">
-                        <span className="text-[10px] text-zinc-500 dark:text-gray-500 font-semibold uppercase tracking-wider">Owner</span>
-                        <OwnerDropdown
-                          owner={owner}
-                          members={members}
-                          disabled={!isAdmin}
-                          onSelect={(member) => handleOwnerSelect(venture._id as Id<"ventures">, member)}
-                          className="border border-zinc-200 dark:border-gray-800 bg-zinc-50/50 dark:bg-gray-900/40 hover:bg-zinc-100 dark:hover:bg-gray-850 text-zinc-800 dark:text-zinc-300 justify-between w-full font-medium"
-                        />
-                      </div>
-
-                      <div className="flex flex-col gap-1">
-                        <span className="text-[10px] text-zinc-500 dark:text-gray-500 font-semibold uppercase tracking-wider">Target Date</span>
-                        <VentureDateDropdown
-                          selectedDateStr={venture.targetDeadline}
-                          disabled={!isAdmin}
-                          onSelectDate={(dateStr) => handleTargetDeadlineSelect(venture._id as Id<"ventures">, dateStr)}
-                          className="border border-zinc-200 dark:border-gray-800 bg-zinc-50/50 dark:bg-gray-900/40 hover:bg-zinc-100 dark:hover:bg-gray-850 text-zinc-800 dark:text-zinc-300 justify-between w-full"
-                        />
-                      </div>
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-sm font-semibold text-zinc-900 dark:text-white truncate">{venture.name}</span>
+                      {venture.summary && (
+                        <span className="text-xs text-zinc-500 dark:text-zinc-500 mt-0.5 line-clamp-2" title={venture.summary}>
+                          {venture.summary}
+                        </span>
+                      )}
                     </div>
                   </div>
-                );
-              })}
-            </div>
+                  <div
+                    className="flex items-center gap-1.5 bg-zinc-100 dark:bg-zinc-800/40 px-2.5 py-0.5 rounded-lg text-xs font-semibold text-zinc-700 dark:text-zinc-400 shrink-0 border border-zinc-200/50 dark:border-zinc-800"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5 text-indigo-500" />
+                    <span>{venture.projects ?? 0}</span>
+                  </div>
+                </div>
 
-            {/* Desktop Row List */}
-            <div className="hidden md:flex flex-col">
-              {filteredVentures.map((venture: any) => {
-                const owner = members.find((m) => m._id === venture.ownerId) ?? null;
+                <div className="border-t border-zinc-200/60 dark:border-zinc-800/40 my-0.5" />
 
-                return (
-                  <div key={venture._id} className="group flex items-center gap-4 md:gap-6 rounded-lg px-3 py-2.5 hover:bg-zinc-100/60 dark:hover:bg-gray-800/40">
-                    <div className="flex flex-1 items-center gap-3">
-                      <input
-                        type="checkbox"
-                        className="h-4 w-4 rounded border border-gray-700 bg-transparent accent-indigo-500 cursor-pointer"
-                      />
-                      <div className="flex h-6 w-6 items-center justify-center rounded-md">
-                        <Mountain className="h-3.5 w-3.5 text-indigo-400" />
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-sm font-medium text-zinc-900 dark:text-gray-200">{venture.name}</span>
-                        {venture.summary && (
-                          <span className="text-xs text-zinc-500 dark:text-gray-500 truncate max-w-sm mt-0.5" title={venture.summary}>
-                            {venture.summary}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className={`flex ${COL.status} items-center justify-end`}>
+                <div className="flex flex-col gap-2.5 sm:grid sm:grid-cols-3 sm:gap-3" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-center justify-between sm:flex-col sm:items-start gap-1">
+                    <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-wider">Status</span>
+                    <div className="w-1/2 sm:w-full">
                       <StatusDropdown
                         status={venture.status}
                         disabled={!isAdmin}
                         onSelect={(status) => handleStatusSelect(venture._id as Id<"ventures">, status)}
+                        className="border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-850 text-zinc-800 dark:text-zinc-300 justify-between w-full shadow-sm rounded-lg"
                       />
                     </div>
+                  </div>
 
-                    <div className={`flex ${COL.owner} items-center justify-end`}>
+                  <div className="flex items-center justify-between sm:flex-col sm:items-start gap-1">
+                    <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-wider">Owner</span>
+                    <div className="w-1/2 sm:w-full">
                       <OwnerDropdown
                         owner={owner}
-                        members={members}
-                        disabled={!isAdmin} 
+                        members={members ?? []}
+                        disabled={!isAdmin}
                         onSelect={(member) => handleOwnerSelect(venture._id as Id<"ventures">, member)}
+                        className="border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-850 text-zinc-800 dark:text-zinc-300 justify-between w-full font-medium shadow-sm rounded-lg"
                       />
                     </div>
+                  </div>
 
-                    <div className={`${COL.target} flex items-center justify-end`}>
+                  <div className="flex items-center justify-between sm:flex-col sm:items-start gap-1">
+                    <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-wider">Target Date</span>
+                    <div className="w-1/2 sm:w-full">
                       <VentureDateDropdown
                         selectedDateStr={venture.targetDeadline}
                         disabled={!isAdmin}
                         onSelectDate={(dateStr) => handleTargetDeadlineSelect(venture._id as Id<"ventures">, dateStr)}
+                        className="border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-855 text-zinc-800 dark:text-zinc-300 justify-between w-full shadow-sm rounded-lg"
                       />
                     </div>
-
-                    <div className={`flex ${COL.projects} items-center justify-end gap-1.5`}>
-                      <CheckCircle2 className="h-4 w-4 text-indigo-400" />
-                      <span className="text-sm text-zinc-600 dark:text-gray-400">{venture.projects ?? 0}</span>
-                    </div>
                   </div>
-                );
-              })}
-            </div>
-          </>
-        )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Desktop Row List */}
+        <div className="hidden md:flex flex-col gap-1.5">
+          {(filteredVentures ?? []).map((venture: any) => {
+            const owner = (members ?? []).find((m) => m._id === venture.ownerId) ?? null;
+            return (
+              <div
+                key={venture._id}
+                onClick={() => navigate(`/ventures/${venture._id}`)}
+                className="group grid grid-cols-[1.5fr_120px_160px_140px_100px] gap-4 items-center rounded-xl px-4 py-3 hover:bg-zinc-100/50 dark:hover:bg-zinc-900/40 border border-transparent hover:border-zinc-200/50 dark:hover:border-zinc-800/40 transition-all duration-200 cursor-pointer"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-indigo-500/10 shrink-0">
+                    <Kayak className="h-3.5 w-3.5 text-indigo-400" />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-sm font-semibold text-zinc-900 dark:text-white group-hover:text-indigo-650 dark:group-hover:text-indigo-400 transition-colors truncate">{venture.name}</span>
+                    {venture.summary && (
+                      <span className="text-xs text-zinc-500 dark:text-zinc-550 truncate max-w-sm md:max-w-md lg:max-w-lg mt-0.5" title={venture.summary}>
+                        {venture.summary}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="justify-self-end" onClick={(e) => e.stopPropagation()}>
+                  <StatusDropdown
+                    status={venture.status}
+                    disabled={!isAdmin}
+                    onSelect={(status) => handleStatusSelect(venture._id as Id<"ventures">, status)}
+                    className="hover:bg-zinc-100 dark:hover:bg-zinc-800/60"
+                  />
+                </div>
+
+                <div className="justify-self-end" onClick={(e) => e.stopPropagation()}>
+                  <OwnerDropdown
+                    owner={owner}
+                    members={members ?? []}
+                    disabled={!isAdmin}
+                    onSelect={(member) => handleOwnerSelect(venture._id as Id<"ventures">, member)}
+                    className="hover:bg-zinc-100 dark:hover:bg-zinc-800/60"
+                  />
+                </div>
+
+                <div className="justify-self-end" onClick={(e) => e.stopPropagation()}>
+                  <VentureDateDropdown
+                    selectedDateStr={venture.targetDeadline}
+                    disabled={!isAdmin}
+                    onSelectDate={(dateStr) => handleTargetDeadlineSelect(venture._id as Id<"ventures">, dateStr)}
+                    className="hover:bg-zinc-100 dark:hover:bg-zinc-800/60"
+                  />
+                </div>
+
+                <div className="justify-self-end flex items-center gap-1.5 text-zinc-650 dark:text-gray-400 text-sm pr-2">
+                  <CheckCircle2 className="h-4 w-4 text-indigo-400" />
+                  <span>{venture.projects ?? 0}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </main>
     </div>
   );
