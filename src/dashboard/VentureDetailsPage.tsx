@@ -9,7 +9,8 @@ import {
   ChevronDown,
   User,
   Check,
-  Calendar as CalendarIcon,
+ 
+  CalendarX2,
   CircleDashed,
   Play,
   CheckCircle2,
@@ -18,6 +19,10 @@ import {
   Paperclip,
   ExternalLink,
   ArrowLeft,
+  Hexagon,
+  Timer,
+  CircleX,
+  FileText,
 } from 'lucide-react';
 import { useUser, useOrganization } from "@clerk/clerk-react";
 
@@ -162,8 +167,8 @@ const StatusDropdown = ({
   disabled,
   className = '',
 }: {
-  status: 'active' | 'planned' | 'completed';
-  onSelect: (status: 'active' | 'planned' | 'completed') => void;
+  status: 'planned' |'active' |  'completed';
+  onSelect: (status: 'planned'|'active' | 'completed') => void;
   disabled: boolean;
   className?: string;
 }) => {
@@ -226,10 +231,12 @@ const DatePickerDropdown = ({
   selectedDateStr,
   onSelectDate,
   disabled,
+  className = '',
 }: {
   selectedDateStr: string | undefined;
   onSelectDate: (dateStr: string) => void;
   disabled: boolean;
+  className?: string;
 }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -302,12 +309,12 @@ const DatePickerDropdown = ({
         disabled={disabled}
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors min-w-[100px] justify-between border border-zinc-200 dark:border-zinc-800
+        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors min-w-[100px] justify-between
           ${disabled ? 'cursor-default' : 'hover:bg-zinc-100/40 dark:hover:bg-zinc-800/40'}
-          ${selectedDateStr ? 'text-zinc-800 dark:text-zinc-200' : 'text-zinc-400 dark:text-zinc-500'}`}
+          ${selectedDateStr ? 'text-zinc-800 dark:text-zinc-200' : 'text-zinc-400 dark:text-zinc-500'} ${className}`}
       >
         <span className="flex items-center gap-1.5">
-          <CalendarIcon className="h-3.5 w-3.5 text-gray-500" />
+          <CalendarX2 className="h-3.5 w-3.5 text-gray-500" />
           <span>{formattedDate}</span>
         </span>
         {!disabled && <ChevronDown className="h-3 w-3 text-gray-600 ml-1.5" />}
@@ -344,11 +351,13 @@ const getProjectStatusIcon = (state?: string, className?: string) => {
     case 'started':
     case 'in-progress':
     case 'in progress':
-      return <Play className={cn('text-blue-500 shrink-0', className)} />;
+      return <Timer className={cn('text-blue-500 shrink-0', className)} />;
     case 'completed':
       return <CheckCircle2 className={cn('text-emerald-500 shrink-0', className)} />;
+    case 'canceled':
+      return <CircleX className={cn('text-zinc-500 dark:text-zinc-400 shrink-0', className)} />;
     default:
-      return <CircleDashed className={cn('text-zinc-400 dark:text-zinc-500 shrink-0', className)} />;
+      return <Hexagon className={cn('text-zinc-400 dark:text-zinc-500 shrink-0', className)} />;
   }
 };
 
@@ -393,6 +402,9 @@ export default function VentureDetailsPage() {
 
   const addStorageDocument = useMutation(api.ventures.addStorageDocument);
   const generateUploadUrl = useMutation(api.ventures.generateUploadUrl);
+
+  const appDocs = useQuery(api.documents.listVentureDocuments, ventureId ? { ventureId: ventureId as Id<"ventures"> } : "skip");
+  const createDoc = useMutation(api.documents.createDocument);
 
   // Editable field states
   const [name, setName] = useState('');
@@ -473,7 +485,7 @@ export default function VentureDetailsPage() {
     await updateOwner({ ventureId: venture._id, ownerId: member?._id as Id<'members'> ?? null, clerkAdminBypass: isClerkAdmin });
   }, [venture, updateOwner, isClerkAdmin]);
 
-  const handleStatusSelect = useCallback(async (status: 'active' | 'planned' | 'completed') => {
+  const handleStatusSelect = useCallback(async (status: 'planned'|'active' | 'completed') => {
     if (!venture) return;
     await updateStatus({ ventureId: venture._id, status, clerkAdminBypass: isClerkAdmin });
   }, [venture, updateStatus, isClerkAdmin]);
@@ -531,6 +543,20 @@ export default function VentureDetailsPage() {
     }
   }, [venture, generateUploadUrl, addStorageDocument, isClerkAdmin]);
 
+  const handleCreateDoc = async () => {
+    if (!ventureId) return;
+    try {
+      const docId = await createDoc({
+        ventureId: ventureId as Id<"ventures">,
+        title: "New Document",
+        content: ""
+      });
+      navigate(`/document/${docId}`);
+    } catch (err) {
+      console.error("Failed to create document", err);
+    }
+  };
+
   const handleDeleteDocument = useCallback(async (indexToDelete: number) => {
     if (!venture) return;
     const currentDocs = venture.documents || [];
@@ -566,41 +592,29 @@ export default function VentureDetailsPage() {
 
   // ─── Render ─────────────────────────────────────────────────────
   return (
-    <div className="flex flex-col h-full px-5 py-4 max-w-[1400px] mx-auto text-zinc-800 dark:text-zinc-100">
+    <div className="relative h-full px-6 py-6 w-full text-zinc-800 dark:text-zinc-100">
 
-      {/* ─── Breadcrumbs ─── */}
-      <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-3 mb-6">
-        <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
-          <button
-            onClick={() => navigate('/ventures')}
-            className="hover:text-zinc-200 dark:hover:text-zinc-350 transition-colors font-medium"
-          >
-            Ventures
-          </button>
-          <span>&gt;</span>
-          <span className="font-semibold text-zinc-200 dark:text-zinc-100 truncate max-w-[240px]">
-            {venture.name}
-          </span>
-        </div>
+      {/* ─── Navigation ─── */}
+      <div className="flex items-center border-b border-zinc-200 dark:border-zinc-800 pb-4 mb-8">
         <button
           onClick={() => navigate('/ventures')}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800 text-xs font-medium text-zinc-700 dark:text-zinc-400 hover:bg-zinc-100/40 dark:hover:bg-zinc-800/40 transition-colors"
+          className="group flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-xs font-medium text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-all -ml-2"
         >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          <span>Ventures list</span>
+          <ArrowLeft className="h-4 w-4 opacity-70 group-hover:opacity-100 transition-opacity" />
+          <span>Back to Ventures</span>
         </button>
       </div>
 
       {/* ─── Main Content ─── */}
       <div className="flex-1 min-h-0 overflow-y-auto">
-        <div className="flex flex-col gap-6 max-w-4xl">
+        <div className="flex flex-col gap-6 w-full">
 
           {/* Title Block */}
-          <div className="flex items-start gap-4 pb-4 border-b border-zinc-200 dark:border-zinc-800">
-            <div className="size-11 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-indigo-500/10 flex items-center justify-center shrink-0">
+          <div className="flex items-start gap-4 pb-6">
+            <div className="size-10 rounded-full border border-zinc-200 dark:border-zinc-800 bg-indigo-500/10 flex items-center justify-center shrink-0">
               <Kayak className="h-5 w-5 text-indigo-400" />
             </div>
-            <div className="flex-1 flex flex-col gap-1 min-w-0">
+            <div className="flex-1 flex flex-col min-w-0">
               <input
                 type="text"
                 value={name}
@@ -608,7 +622,7 @@ export default function VentureDetailsPage() {
                 onBlur={handleNameBlur}
                 disabled={!isAdmin}
                 placeholder="Venture name"
-                className="w-full bg-transparent text-xl md:text-2xl font-bold text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-600 border-none outline-none focus:ring-0 p-0"
+                className="w-full bg-transparent text-2xl font-bold text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-600 border-none outline-none focus:ring-0 p-0"
               />
               <input
                 type="text"
@@ -617,223 +631,270 @@ export default function VentureDetailsPage() {
                 onBlur={handleSummaryBlur}
                 disabled={!isAdmin}
                 placeholder="Add a short summary..."
-                className="w-full bg-transparent text-xs text-zinc-500 dark:text-zinc-400 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 border-none outline-none focus:ring-0 p-0 mt-0.5"
+                className="w-full bg-transparent text-sm text-zinc-500 dark:text-zinc-400 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 border-none outline-none focus:ring-0 p-0 mt-1"
               />
             </div>
           </div>
 
-          {/* Properties Row */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-zinc-50/40 dark:bg-zinc-950/20 p-4 rounded-xl border border-zinc-200/60 dark:border-zinc-800/50 shadow-sm">
-            <div className="flex flex-col gap-1.5 text-xs">
-              <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-wider">Status</span>
+          {/* Metadata Grid */}
+          <div className="grid grid-cols-[100px_1fr] sm:grid-cols-[120px_1fr] gap-y-4 pt-2 pb-8">
+            
+            {/* Properties Row */}
+            <div className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
+              Properties
+            </div>
+            <div className="flex flex-wrap items-center gap-1.5 -ml-2">
               <StatusDropdown
                 status={venture.status}
                 disabled={!isAdmin}
                 onSelect={handleStatusSelect}
-                className="border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-300 justify-between w-full shadow-sm rounded-lg"
+                className="bg-transparent border-none shadow-none text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800/60 rounded-md transition-colors px-2 py-1 text-[13px] font-medium"
               />
-            </div>
-            <div className="flex flex-col gap-1.5 text-xs">
-              <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-wider">Owner</span>
               <OwnerDropdown
                 owner={owner}
                 members={members ?? []}
                 disabled={!isAdmin}
                 onSelect={handleOwnerSelect}
-                className="border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-300 justify-between w-full font-medium shadow-sm rounded-lg"
+                className="bg-transparent border-none shadow-none text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800/60 rounded-md transition-colors px-2 py-1 font-medium text-[13px]"
               />
-            </div>
-            <div className="flex flex-col gap-1.5 text-xs">
-              <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-wider">Target Date</span>
               <DatePickerDropdown
                 selectedDateStr={venture.targetDeadline}
                 disabled={!isAdmin}
                 onSelectDate={handleTargetDateSelect}
+                className="bg-transparent border-none shadow-none text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800/60 rounded-md transition-colors px-2 py-1 text-[13px] font-medium"
               />
             </div>
-          </div>
 
-          {/* Description Section */}
-          <div className="flex flex-col gap-2">
-            <span className="text-xs font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
-              Description
-            </span>
-            {isEditingDesc ? (
-              <textarea
-                autoFocus
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                onBlur={handleDescriptionBlur}
-                placeholder="Describe this venture in detail..."
-                className="w-full min-h-[160px] rounded-xl border border-zinc-200 dark:border-zinc-800 bg-transparent p-3.5 text-sm text-zinc-800 dark:text-zinc-200 outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 leading-relaxed"
-              />
-            ) : (
-              <div
-                onClick={() => isAdmin && setIsEditingDesc(true)}
-                className={`min-h-[140px] rounded-xl border border-zinc-200 dark:border-zinc-800/85 bg-zinc-50/10 dark:bg-zinc-900/5 p-4 text-sm cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900/10 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all duration-200 leading-relaxed whitespace-pre-wrap ${!description && 'text-zinc-400 italic'}`}
-              >
-                {description || 'No description provided. Click to add one.'}
+            {/* Resources Row */}
+            <div className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
+              Resources
+            </div>
+            <div className="flex flex-col gap-3 min-w-0">
+              <div className="flex items-center flex-wrap gap-2 -ml-2">
+                {isAdmin && (
+                  <>
+                    <div className="relative">
+                      <button
+                        type="button"
+                        disabled={isUploading}
+                        onClick={() => setIsAddingDoc(true)}
+                        className="flex items-center gap-1.5 px-2 py-1 rounded-md border border-transparent text-[13px] text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 hover:dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-all duration-200 cursor-pointer"
+                      >
+                        <PlusCircle className="h-3.5 w-3.5 opacity-70" />
+                        Add link...
+                      </button>
+
+                      {isAddingDoc && (
+                        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/30 dark:bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+                          <div className="w-[420px] max-w-[90vw]" onClick={(e) => e.stopPropagation()}>
+                            <form onSubmit={handleAddDocument} className="border border-zinc-200 dark:border-zinc-750 bg-white dark:bg-[#232325] rounded-xl p-5 flex flex-col gap-4 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+                              <div className="flex items-center gap-2 mb-1 border-b border-zinc-100 dark:border-zinc-800/60 pb-3">
+                                <ExternalLink className="h-4 w-4 text-zinc-400 dark:text-zinc-500" />
+                                <span className="text-[14px] font-semibold text-zinc-800 dark:text-zinc-200">Add link to venture</span>
+                              </div>
+                              
+                              <div className="flex flex-col gap-1.5">
+                                <label className="text-[12px] font-semibold text-zinc-500 dark:text-zinc-400 tracking-wider">Title </label>
+                                <input
+                                  type="text"
+                                  placeholder="Link Title"
+                                  value={docTitle}
+                                  onChange={(e) => setDocTitle(e.target.value)}
+                                  className="w-full rounded-md border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-[#1a1a1c] px-3 py-2 text-sm text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 dark:placeholder-zinc-600 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                                  autoFocus
+                                />
+                              </div>
+                              
+                              <div className="flex flex-col gap-1.5">
+                                <label className="text-[12px] font-semibold text-zinc-500 dark:text-zinc-400 tracking-wider">URL</label>
+                                <input
+                                  type="url"
+                                  placeholder="https://..."
+                                  value={docUrl}
+                                  onChange={(e) => setDocUrl(e.target.value)}
+                                  className="w-full rounded-md border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-[#1a1a1c] px-3 py-2 text-sm text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 dark:placeholder-zinc-600 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                                  required
+                                />
+                              </div>
+                              
+                              {docError && <p className="text-sm text-red-500">{docError}</p>}
+                              
+                              <div className="flex justify-end gap-2 mt-3">
+                                <button
+                                  type="button"
+                                  onClick={() => { setIsAddingDoc(false); setDocTitle(''); setDocUrl(''); setDocError(''); }}
+                                  className="px-4 py-2 rounded-md text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                                >
+                                  Cancel
+                                </button>
+                                <button
+                                  type="submit"
+                                  className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-5 py-2 rounded-md text-sm transition-colors shadow-sm"
+                                >
+                                  Add link
+                                </button>
+                              </div>
+                            </form>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={isUploading || isAddingDoc}
+                      onClick={() => fileInputRef.current?.click()}
+                      className="flex items-center gap-1.5 px-2 py-1 rounded-md border border-transparent text-[13px] text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 hover:dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-all duration-200 cursor-pointer disabled:opacity-40"
+                    >
+                      <Paperclip className="h-3.5 w-3.5 opacity-70" />
+                      {isUploading ? 'Uploading...' : 'Upload File'}
+                    </button>
+                    <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" />
+                    
+                    <button
+                      type="button"
+                      disabled={isUploading || isAddingDoc}
+                      onClick={handleCreateDoc}
+                      className="flex items-center gap-1.5 px-2 py-1 rounded-md border border-transparent text-[13px] text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 hover:dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-all duration-200 cursor-pointer disabled:opacity-40"
+                    >
+                      <FileText className="h-3.5 w-3.5 opacity-70" />
+                      New document
+                    </button>
+                  </>
+                )}
               </div>
-            )}
-          </div>
 
-          {/* Resources Section */}
-          <div className="flex flex-col gap-3">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-100 dark:border-zinc-800/40 pb-2">
-              <span className="text-xs font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
-                Resources & Links
-              </span>
-              {isAdmin && (
-                <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    disabled={isUploading}
-                    onClick={() => setIsAddingDoc(true)}
-                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-zinc-200 dark:border-zinc-800 text-[10px] font-semibold text-zinc-650 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-200 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all duration-200 cursor-pointer"
-                  >
-                    <PlusCircle className="h-3 w-3 text-indigo-500" />
-                    Add Link
-                  </button>
-                  <button
-                    type="button"
-                    disabled={isUploading || isAddingDoc}
-                    onClick={() => fileInputRef.current?.click()}
-                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-zinc-200 dark:border-zinc-800 text-[10px] font-semibold text-zinc-650 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-200 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all duration-200 cursor-pointer disabled:opacity-40"
-                  >
-                    <Paperclip className="h-3 w-3 text-emerald-500" />
-                    {isUploading ? 'Uploading...' : 'Upload File'}
-                  </button>
-                  <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" />
+              {venture.documents && venture.documents.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {venture.documents.map((doc, idx) => (
+                    <div
+                      key={idx}
+                      className="group flex items-center gap-2 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white/40 dark:bg-zinc-900/40 px-2.5 py-1 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800/60 transition-all duration-200"
+                    >
+                      <ExternalLink className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
+                      <a
+                        href={doc.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-medium hover:underline hover:text-zinc-900 dark:hover:text-white truncate max-w-[200px]"
+                      >
+                        {doc.title}
+                      </a>
+                      {isAdmin && (
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteDocument(idx)}
+                          className="text-zinc-400 hover:text-red-500 rounded shrink-0 ml-1 transition-colors opacity-0 group-hover:opacity-100"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {appDocs && appDocs.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {appDocs.map((doc) => (
+                    <div
+                      key={doc._id}
+                      onClick={() => navigate(`/document/${doc._id}`)}
+                      className="group flex items-center gap-2 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white/40 dark:bg-zinc-900/40 px-2.5 py-1 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800/60 transition-all duration-200 cursor-pointer"
+                    >
+                      <FileText className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
+                      <span className="font-medium hover:underline hover:text-zinc-900 dark:hover:text-white truncate max-w-[200px]">
+                        {doc.title || "Untitled Document"}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
 
-            {isAddingDoc && (
-              <form onSubmit={handleAddDocument} className="border border-zinc-200 dark:border-zinc-800/80 bg-zinc-50/30 dark:bg-[#1a1a1c]/30 rounded-xl p-3.5 flex flex-col gap-3 animate-in fade-in duration-200">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <input
-                    type="text"
-                    placeholder="Link Title (e.g. Design Spec)"
-                    value={docTitle}
-                    onChange={(e) => setDocTitle(e.target.value)}
-                    className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-transparent px-3 py-1.5 text-xs text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 dark:placeholder-zinc-600 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                    required
-                  />
-                  <input
-                    type="text"
-                    placeholder="URL (e.g. figma.com/...)"
-                    value={docUrl}
-                    onChange={(e) => setDocUrl(e.target.value)}
-                    className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-transparent px-3 py-1.5 text-xs text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 dark:placeholder-zinc-600 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                    required
-                  />
+            {/* Description Row */}
+            <div className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
+              Description
+            </div>
+            <div className="flex flex-col gap-2 min-w-0">
+              {isEditingDesc ? (
+                <textarea
+                  autoFocus
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  onBlur={handleDescriptionBlur}
+                  placeholder="Add description..."
+                  className="w-full min-h-[160px] rounded-xl border border-zinc-200 dark:border-zinc-800 bg-transparent p-3 text-[15px] text-zinc-800 dark:text-zinc-200 outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 leading-relaxed max-w-4xl"
+                />
+              ) : (
+                <div
+                  onClick={() => isAdmin && setIsEditingDesc(true)}
+                  className={`min-h-[100px] text-[15px] cursor-pointer hover:bg-zinc-50/50 dark:hover:bg-zinc-900/30 rounded-lg -ml-3 p-3 transition-colors max-w-4xl leading-relaxed whitespace-pre-wrap ${!description ? 'text-zinc-400 dark:text-zinc-600' : 'text-zinc-800 dark:text-zinc-200'}`}
+                >
+                  {description || 'Add description...'}
                 </div>
-                {docError && <p className="text-xs text-red-500">{docError}</p>}
-                <div className="flex justify-end gap-2.5">
-                  <button
-                    type="button"
-                    onClick={() => { setIsAddingDoc(false); setDocTitle(''); setDocUrl(''); setDocError(''); }}
-                    className="text-xs text-zinc-200 hover:text-zinc-300 dark:text-gray-500 dark:hover:text-gray-300 font-medium"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-3 py-1 rounded text-xs transition-colors"
-                  >
-                    Add
-                  </button>
-                </div>
-              </form>
-            )}
-
-            {venture.documents && venture.documents.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {venture.documents.map((doc, idx) => (
-                  <div
-                    key={idx}
-                    className="group flex items-center gap-2 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white/40 dark:bg-zinc-900/10 px-3 py-1.5 text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all duration-200 shadow-sm"
-                  >
-                    <ExternalLink className="h-3 w-3 text-zinc-400 shrink-0" />
-                    <a
-                      href={doc.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-semibold hover:underline hover:text-indigo-600 dark:hover:text-indigo-400 truncate max-w-[200px]"
-                    >
-                      {doc.title}
-                    </a>
-                    {isAdmin && (
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteDocument(idx)}
-                        className="text-zinc-400 hover:text-red-500 rounded shrink-0 p-0.5 ml-1 transition-colors"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-xs text-zinc-400 dark:text-zinc-600 italic">No resources added yet.</div>
-            )}
-          </div>
-
-          {/* Associated Projects Section */}
-          <div className="flex flex-col gap-3 pt-2 pb-6">
-            <span className="text-xs font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
+              )}
+            </div>
+            {/* Associated Projects Row */}
+            <div className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
               Associated Projects
-            </span>
+            </div>
+            <div className="flex flex-col gap-3 min-w-0 pb-6">
 
-            {ventureProjects.length > 0 && (
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center bg-zinc-50/40 dark:bg-zinc-950/20 rounded-xl p-3.5 border border-zinc-200/60 dark:border-zinc-800/50 shadow-sm text-xs">
-                <div className="flex flex-col">
-                  <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-semibold uppercase tracking-wider">Planned</span>
-                  <span className="font-bold text-zinc-800 dark:text-zinc-200 mt-0.5 text-sm">{projectStats.planned}</span>
-                </div>
-                <div className="flex flex-col border-l border-zinc-200/60 dark:border-zinc-800/40">
-                  <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-semibold uppercase tracking-wider">In Progress</span>
-                  <span className="font-bold text-zinc-800 dark:text-zinc-200 mt-0.5 text-sm">{projectStats.inProgress}</span>
-                </div>
-                <div className="flex flex-col border-l border-zinc-200/60 dark:border-zinc-800/40">
-                  <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-semibold uppercase tracking-wider">Completed</span>
-                  <span className="font-bold text-zinc-800 dark:text-zinc-200 mt-0.5 text-sm">{projectStats.completed}</span>
-                </div>
-                <div className="flex flex-col border-l border-zinc-200/60 dark:border-zinc-800/40">
-                  <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-semibold uppercase tracking-wider">Total</span>
-                  <span className="font-bold text-indigo-600 dark:text-indigo-400 mt-0.5 text-sm">{projectStats.total}</span>
-                </div>
-              </div>
-            )}
-
-            {ventureProjects.length > 0 ? (
-              <div className="flex flex-col gap-2">
-                {ventureProjects.map((proj) => (
-                  <div
-                    key={proj._id}
-                    onClick={() => navigate(`/projects/${proj.id}`)}
-                    className="flex items-center justify-between rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white/60 dark:bg-zinc-900/10 p-3.5 shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-900/20 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all duration-200 cursor-pointer group"
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      {getProjectStatusIcon(proj.state, 'h-4 w-4')}
-                      <span className="text-base shrink-0">{proj.iconEmoji || '📁'}</span>
-                      <span className="text-xs font-semibold text-zinc-400 dark:text-zinc-200 truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                        {proj.name}
-                      </span>
+              {ventureProjects.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {ventureProjects.map((proj) => (
+                    <div
+                      key={proj._id}
+                      onClick={() => navigate(`/projects/${proj.id}`)}
+                      className="flex flex-col rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/40 p-4 shadow-sm hover:shadow-md hover:border-indigo-500/30 transition-all duration-200 cursor-pointer group relative overflow-hidden"
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center justify-center size-9 bg-zinc-50 dark:bg-zinc-800/80 rounded-lg border border-zinc-100 dark:border-zinc-700/50 shadow-sm">
+                            <span className="text-lg">{proj.iconEmoji || '📁'}</span>
+                          </div>
+                          <span className="font-semibold text-zinc-900 dark:text-zinc-100 line-clamp-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                            {proj.name}
+                          </span>
+                        </div>
+                        <div className="size-6 rounded-full bg-zinc-50 dark:bg-zinc-800 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all transform scale-90 group-hover:scale-100">
+                          <ExternalLink className="h-3 w-3 text-zinc-500 dark:text-zinc-400 group-hover:text-indigo-500" />
+                        </div>
+                      </div>
+                      
+                      <p className="text-sm text-zinc-500 dark:text-zinc-400 line-clamp-2 mb-4 flex-1 h-10">
+                        {proj.description || <span className="italic opacity-50">No description provided.</span>}
+                      </p>
+                      
+                      <div className="mt-auto pt-3 border-t border-zinc-100 dark:border-zinc-800/60 flex items-center justify-between">
+                        <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/50 dark:border-zinc-700/50">
+                          {getProjectStatusIcon(proj.state, 'h-3 w-3')}
+                          <span className="text-xs font-medium capitalize text-zinc-600 dark:text-zinc-300">
+                            {proj.state || 'Planned'}
+                          </span>
+                        </div>
+                        {proj.progress !== undefined && (
+                          <div className="flex items-center gap-2" title={`${Math.round(proj.progress)}% completed`}>
+                            <div className="w-16 h-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                              <div 
+                                className="h-full bg-indigo-500 rounded-full transition-all duration-500" 
+                                style={{ width: `${proj.progress}%` }}
+                              />
+                            </div>
+                            <span className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400 w-8 text-right">
+                              {Math.round(proj.progress)}%
+                            </span>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-3 shrink-0">
-                      <span className="text-[10px] capitalize text-zinc-500 bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded border border-zinc-200/50 dark:border-zinc-800/30 font-medium">
-                        {proj.state || 'planned'}
-                      </span>
-                      <ExternalLink className="h-3.5 w-3.5 text-zinc-400 group-hover:text-indigo-500 transition-colors" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-xs text-zinc-400 dark:text-zinc-600 italic">No associated projects.</div>
-            )}
+                  ))}
+                </div>
+              ) : (
+                <div className="text-sm text-zinc-400 dark:text-zinc-600 italic">No associated projects.</div>
+              )}
+            </div>
           </div>
         </div>
       </div>
