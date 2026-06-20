@@ -1,18 +1,3 @@
-# Venture
-
-Venture is a modern project and venture management platform designed to help teams organize goals, track progress, manage projects, and collaborate effectively. The application provides a clean and intuitive interface for creating ventures, assigning ownership, monitoring project health, and tracking key objectives.
-
-## Features
-
-* Create and manage ventures
-* Set targets and goals
-* Track project progress
-* Team collaboration and member management
-* Real-time data synchronization using Convex
-* Secure authentication and user management
-* Responsive and modern user interface
-* Dark mode support
-
 ## Tech Stack
 
 ### Frontend
@@ -119,5 +104,9 @@ npm run dev       # Start development server
 npm run build     # Create production build
 npm run preview   # Preview production build
 npx convex dev    # Start Convex development environment
+npx convex typecheck
+npx tsc  --noEmit
+npx convex codegen 
+
 ```
 
