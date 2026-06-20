@@ -12,7 +12,7 @@ import {
     HandshakeIcon,
     UserRoundIcon,
     UsersIcon,
-    Mountain
+  
 } from "lucide-react";
 import * as React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -27,7 +27,7 @@ export function SettingsSidebar({ ...props }: React.ComponentProps<typeof Sideba
         { path: "/settings/teams", label: "Teams", icon: <HandshakeIcon className="size-4 shrink-0" /> },
         { path: "/settings/members", label: "Members", icon: <UserRoundIcon className="size-4 shrink-0" /> },
         { path: "/settings/squads", label: "Squads", icon: <UsersIcon className="size-4 shrink-0" /> },
-        { path: "/settings/ventures", label: "Ventures", icon: <Mountain className="size-4 shrink-0" /> },
+      
     ];
 
     return (

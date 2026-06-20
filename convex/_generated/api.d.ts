@@ -8,6 +8,9 @@
  * @module
  */
 
+import type * as debug from "../debug.js";
+import type * as documents from "../documents.js";
+import type * as fixRoles from "../fixRoles.js";
 import type * as http from "../http.js";
 import type * as linear from "../linear.js";
 import type * as members from "../members.js";
@@ -20,6 +23,9 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  debug: typeof debug;
+  documents: typeof documents;
+  fixRoles: typeof fixRoles;
   http: typeof http;
   linear: typeof linear;
   members: typeof members;

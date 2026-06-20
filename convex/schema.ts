@@ -5,6 +5,8 @@ export default defineSchema({
   // ── Linear sync ───────────────────────────────────────────────────────────
   linearProjects: defineTable({
     id:          v.string(),
+    // Optional emoji for project icon
+    iconEmoji:   v.optional(v.string()),
     name:        v.string(),
     state:       v.string(),
     startDate:   v.optional(v.string()),
@@ -19,7 +21,7 @@ export default defineSchema({
       v.union(
         v.literal("backlog"),
         v.literal("planned"),
-        v.literal("in-progress"),
+   
         v.literal("completed"),
         v.literal("canceled"),
       ),
@@ -29,6 +31,20 @@ export default defineSchema({
         v.null(),
         v.object({ name: v.string(), email: v.string() }),
       ),
+    ),
+    ventureId: v.optional(v.string()),
+    members: v.optional(
+      v.array(
+        v.object({ name: v.string(), email: v.string() })
+      )
+    ),
+    documents: v.optional(
+      v.array(
+        v.object({
+          title: v.string(),
+          url: v.string(),
+        })
+      )
     ),
   }).index("by_linearId", ["id"]),
 
@@ -121,5 +137,22 @@ export default defineSchema({
     ),
     summary: v.optional(v.string()),
     targetDeadline: v.optional(v.string()),
+    description: v.optional(v.string()),
+    documents: v.optional(
+      v.array(
+        v.object({
+          title: v.string(),
+          url: v.string(),
+        })
+      )
+    ),
   }),
+
+  appDocuments: defineTable({
+    title: v.string(),
+    content: v.string(),
+    ventureId: v.id("ventures"),
+    createdAt: v.string(),
+    updatedAt: v.string(),
+  }).index("by_venture", ["ventureId"]),
 });

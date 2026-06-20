@@ -618,34 +618,35 @@ export const syncDbWithClerk = internalMutation({
 })
 
 export const syncClerkMembers = action({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity()
-    if (!identity) throw new Error("Not authenticated")
+  args: { orgId: v.optional(v.string()) },
+  handler: async (ctx, args) => {
 
     if (!process.env.CLERK_SECRET_KEY) {
       console.error("CLERK_SECRET_KEY is not defined in Convex env variables")
       return { success: false, reason: "CLERK_SECRET_KEY missing" }
     }
 
-    const orgsResponse = await fetch("https://api.clerk.com/v1/organizations", {
-      headers: {
-        Authorization: `Bearer ${process.env.CLERK_SECRET_KEY}`,
-        "Content-Type": "application/json",
+    let orgId = args.orgId;
+    if (!orgId) {
+      const orgsResponse = await fetch("https://api.clerk.com/v1/organizations", {
+        headers: {
+          Authorization: `Bearer ${process.env.CLERK_SECRET_KEY}`,
+          "Content-Type": "application/json",
+        }
+      })
+      if (!orgsResponse.ok) {
+        const errorText = await orgsResponse.text()
+        throw new Error(`Failed to fetch Clerk organizations: ${errorText}`)
       }
-    })
-    if (!orgsResponse.ok) {
-      const errorText = await orgsResponse.text()
-      throw new Error(`Failed to fetch Clerk organizations: ${errorText}`)
+      const orgs = await orgsResponse.json()
+      const orgList = orgs.data || orgs
+      const org = orgList?.[0]
+      if (!org) {
+        console.log("No organization found in Clerk.")
+        return { success: false, reason: "No Clerk organization found" }
+      }
+      orgId = org.id
     }
-    const orgs = await orgsResponse.json()
-    const orgList = orgs.data || orgs
-    const org = orgList?.[0]
-    if (!org) {
-      console.log("No organization found in Clerk.")
-      return { success: false, reason: "No Clerk organization found" }
-    }
-    const orgId = org.id
 
     const membershipsResponse = await fetch(`https://api.clerk.com/v1/organizations/${orgId}/memberships`, {
       headers: {
@@ -931,3 +932,42 @@ export const getCurrentUser = query({
       .first(); // returns the full member record, including role: "Admin" | "Member" etc.
   },
 });
+export const debugPromoteToAdmin = mutation({
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return;
+    const caller = await ctx.db
+      .query('members')
+      .withIndex('by_clerk_id', (q) => q.eq('clerkUserId', identity.subject))
+      .first();
+    if (caller) {
+      await ctx.db.patch(caller._id, { role: 'Admin' });
+    }
+  }
+});
+
+
+export const debugCreateAdminUser = mutation({
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return;
+    const caller = await ctx.db
+      .query('members')
+      .withIndex('by_clerk_id', (q) => q.eq('clerkUserId', identity.subject))
+      .first();
+    if (caller) {
+      await ctx.db.patch(caller._id, { role: 'Admin', status: 'active' });
+    } else {
+      await ctx.db.insert('members', {
+        name: identity.name ?? identity.email ?? 'Unknown',
+        email: identity.email ?? 'unknown@example.com',
+        handle: '@' + (identity.email ? identity.email.split('@')[0].replace(/[._-]+/g, '') : 'user'),
+        clerkUserId: identity.subject,
+        role: 'Admin',
+        status: 'active',
+        joinedAt: new Date().toISOString(),
+      });
+    }
+  }
+});
+

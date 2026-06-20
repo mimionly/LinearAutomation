@@ -1,7 +1,9 @@
 import * as React from "react";
 import {
-  
   ChevronDownIcon,
+  Mountain,
+  Lightbulb,
+  CircleDot,
 } from "lucide-react";
 import {
   Sidebar,
@@ -11,56 +13,89 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarGroupContent,
 } from "@/components/ui/sidebar";
 import {
   DropdownMenu,
- 
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import DevVoidDropdown from "@/dashboard/devVoid-dropdown";
 import { useOrganization } from "@clerk/clerk-react";
+import { Link } from "react-router-dom";
 
-
+const navItems = [
+  {
+    label: "Ventures",
+    icon: Mountain,
+    href: "/ventures",
+  },
+  {
+    label: "Projects",
+    icon: Lightbulb,
+    href: "/projects",
+  },
+  {
+    label: "Issues",
+    icon: CircleDot,
+    href: "/issues",
+  },
+];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { organization } = useOrganization();
-  
+
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <DropdownMenu >
-              <DropdownMenuTrigger >
-                <SidebarMenuButton className="p-1.5 w-full flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger render={<SidebarMenuButton className="p-1.5 w-full flex items-center gap-2" />}>
                   {organization ? (
                     <>
-                      <img 
-                        src={organization.imageUrl} 
-                        alt={organization.name} 
-                        className="size-6 rounded-md object-cover border border-border" 
+                      <img
+                        src={organization.imageUrl}
+                        alt={organization.name}
+                        className="size-6 rounded-md object-cover border border-border"
                       />
-                      <span className="text-sm font-semibold truncate text-foreground">{organization.name}</span>
+                      <span className="text-sm font-semibold truncate text-foreground">
+                        {organization.name}
+                      </span>
                     </>
                   ) : (
                     <>
-                      <div className="size-6 rounded-md bg-muted flex items-center justify-center text-[10px] font-semibold text-muted-foreground border border-dashed border-border shrink-0">
-                        N/A
-                      </div>
-                      <span className="text-sm font-medium text-muted-foreground truncate">Select Workspace</span>
+                      
+                      
                     </>
                   )}
                   <ChevronDownIcon className="ml-auto size-4 opacity-50 shrink-0" />
-                </SidebarMenuButton>
               </DropdownMenuTrigger>
 
-             <DevVoidDropdown />
+              <DevVoidDropdown />
             </DropdownMenu>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
 
-      <SidebarContent />
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupLabel>Workspace</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {navItems.map((item) => (
+                <SidebarMenuItem key={item.label}>
+                  <SidebarMenuButton render={<Link to={item.href} className="flex items-center gap-2" />}>
+                    <item.icon className="size-4" />
+                    <span>{item.label}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
 
       <SidebarFooter />
     </Sidebar>

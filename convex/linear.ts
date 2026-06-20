@@ -98,7 +98,7 @@ export const upsertIssues = internalMutation({
     }
   },
 });
-export const upsertProjects = internalMutation({
+export const upsertProjects = mutation({
   args: {
     projects: v.array(
       v.object({
@@ -109,14 +109,29 @@ export const upsertProjects = internalMutation({
         description: v.optional(v.string()),
         // Accept null from the Linear API (projects with no priority set return null)
         priority: v.union(v.null(), v.number()),
-        health: v.union(v.null(), v.string()),     // null when not set in Linear
-        progress: v.union(v.null(), v.number()),   // null when no issues tracked
+        health: v.optional(v.union(v.null(), v.string())),     // null when not set in Linear
+        progress: v.optional(v.union(v.null(), v.number())),   // null when no issues tracked
         content: v.optional(v.string()),
+        // optional emoji for project icon
+        iconEmoji: v.optional(v.union(v.null(), v.string())),
         // optional + nullable: absent when not set, null when explicitly cleared
         lead: v.optional(v.union(v.null(), v.object({
           name: v.string(),
           email: v.string(),
         }))),
+        ventureId: v.optional(v.string()),
+        startDate: v.optional(v.union(v.null(), v.string())),
+        targetDate: v.optional(v.union(v.null(), v.string())),
+        members: v.optional(
+          v.array(
+            v.object({ name: v.string(), email: v.string() })
+          )
+        ),
+        documents: v.optional(
+          v.array(
+            v.object({ title: v.string(), url: v.string() })
+          )
+        ),
       }),
     ),
   },
@@ -132,6 +147,11 @@ export const upsertProjects = internalMutation({
       const priority = project.priority ?? undefined;
       const health   = project.health   ?? undefined;
       const progress = project.progress ?? undefined;
+      const startDate = project.startDate ?? undefined;
+      const targetDate = project.targetDate ?? undefined;
+      const iconEmoji = project.iconEmoji ?? undefined;
+      const members = project.members ?? undefined;
+      const documents = project.documents ?? undefined;
 
       if (existing) {
         //update :  modify the existing record with new data
@@ -145,7 +165,13 @@ export const upsertProjects = internalMutation({
           health,
           progress,
           content: project.content,
+            iconEmoji,
           lead: project.lead ?? undefined,
+          ventureId: project.ventureId,
+          startDate,
+          targetDate,
+          members,
+          documents,
         });
       } else {
         //insert : if not existing then create a new record in the database
@@ -160,7 +186,13 @@ export const upsertProjects = internalMutation({
           health,
           progress,
           content: project.content,
+            iconEmoji,
           lead: project.lead ?? undefined,
+          ventureId: project.ventureId,
+          startDate,
+          targetDate,
+          members,
+          documents,
         });
       }
     }
@@ -208,14 +240,14 @@ export const fetchCounts = query({
   },
 });
 
-const LINEAR_TO_BADGE_STATUS: Record<string, "backlog" | "planned" | "in-progress" | "completed" | "canceled"> = {
+const LINEAR_TO_BADGE_STATUS: Record<string, "backlog" | "planned" |"completed" | "canceled"> = {
   "backlog": "backlog",
   "planned": "planned",
-  "in-progress": "in-progress",
+
   "completed": "completed",
   "canceled": "canceled",
 };
-function mapLinearStatus(LinearState: string): "backlog" | "planned" | "in-progress" | "completed" | "canceled" {
+function mapLinearStatus(LinearState: string): "backlog" | "planned" | "completed" | "canceled" {
   return LINEAR_TO_BADGE_STATUS[LinearState.toLowerCase()] ?? "backlog";
 }
 
@@ -229,5 +261,102 @@ export const logUserAction = mutation({
       clerkId: args.clerkId,
       action: args.action,
     });
+  },
+});
+
+export const updateProjectFields = mutation({
+  args: {
+    projectId: v.string(),
+    name: v.optional(v.string()),
+    state: v.optional(v.string()),
+    description: v.optional(v.string()),
+    priority: v.optional(v.union(v.null(), v.number())),
+    progress: v.optional(v.number()),
+    content: v.optional(v.string()),
+    iconEmoji: v.optional(v.union(v.null(), v.string())),
+    lead: v.optional(v.union(v.null(), v.object({ name: v.string(), email: v.string() }))),
+    ventureId: v.optional(v.union(v.null(), v.string())),
+    startDate: v.optional(v.union(v.null(), v.string())),
+    targetDate: v.optional(v.union(v.null(), v.string())),
+    members: v.optional(v.array(v.object({ name: v.string(), email: v.string() }))),
+    documents: v.optional(v.array(v.object({ title: v.string(), url: v.string() }))),
+    clerkAdminBypass: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+
+    const caller = await ctx.db
+      .query("members")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkUserId", identity.subject))
+      .first();
+      
+    const isClerkAdmin = args.clerkAdminBypass || (identity as any).role === "admin" || (identity as any).role === "Admin" || (identity as any).org_role === "org:admin" || (identity as any).org_role === "admin";
+    
+    if (!caller && !isClerkAdmin) throw new Error("You are not a member of this workspace.");
+    if (caller && caller.status !== "active" && !isClerkAdmin) throw new Error("Your account is not active.");
+
+    const existing = await ctx.db
+      .query("linearProjects")
+      .withIndex("by_linearId", (q) => q.eq("id", args.projectId))
+      .first();
+    if (!existing) throw new Error("Project not found");
+
+    const patchData: any = {};
+    if (args.name !== undefined) patchData.name = args.name;
+    if (args.state !== undefined) {
+      patchData.state = args.state;
+      patchData.badgeStatus = mapLinearStatus(args.state);
+    }
+    if (args.description !== undefined) patchData.description = args.description;
+    if (args.priority !== undefined) patchData.priority = args.priority;
+    if (args.progress !== undefined) patchData.progress = args.progress;
+    if (args.content !== undefined) patchData.content = args.content;
+    if (args.iconEmoji !== undefined) patchData.iconEmoji = args.iconEmoji;
+    if (args.lead !== undefined) patchData.lead = args.lead;
+    if (args.ventureId !== undefined) patchData.ventureId = args.ventureId ?? undefined;
+    if (args.startDate !== undefined) patchData.startDate = args.startDate ?? undefined;
+    if (args.targetDate !== undefined) patchData.targetDate = args.targetDate ?? undefined;
+    if (args.members !== undefined) patchData.members = args.members;
+    if (args.documents !== undefined) patchData.documents = args.documents;
+
+    await ctx.db.patch(existing._id, patchData);
+  }
+});
+
+export const addProjectStorageDocument = mutation({
+  args: {
+    projectId: v.string(),
+    title: v.string(),
+    storageId: v.string(),
+    clerkAdminBypass: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+
+    const caller = await ctx.db
+      .query("members")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkUserId", identity.subject))
+      .first();
+      
+    const isClerkAdmin = args.clerkAdminBypass || (identity as any).role === "admin" || (identity as any).role === "Admin" || (identity as any).org_role === "org:admin" || (identity as any).org_role === "admin";
+
+    if (!caller && !isClerkAdmin) throw new Error("You are not a member of this workspace.");
+    if (caller && caller.status !== "active" && !isClerkAdmin) throw new Error("Your account is not active.");
+
+    const url = await ctx.storage.getUrl(args.storageId);
+    if (!url) throw new Error("File not found in storage");
+
+    const existing = await ctx.db
+      .query("linearProjects")
+      .withIndex("by_linearId", (q) => q.eq("id", args.projectId))
+      .first();
+    if (!existing) throw new Error("Project not found");
+
+    const currentDocs = existing.documents || [];
+    const updatedDocs = [...currentDocs, { title: args.title, url }];
+
+    await ctx.db.patch(existing._id, { documents: updatedDocs });
   },
 });

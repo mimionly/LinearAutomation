@@ -414,8 +414,8 @@ const StatusDropdown = ({
   disabled,
   className = ""
 }: {
-  status: "active" | "planned" | "completed";
-  onSelect: (status: "active" | "planned" | "completed") => void;
+  status:  "planned"|"active" | "completed";
+  onSelect: (status: "planned"| "active"  | "completed") => void;
   disabled: boolean;
   className?: string;
 }) => {
@@ -483,7 +483,7 @@ const StatusDropdown = ({
 };
 
 // ─── Tab definitions ────────────────────────────────────────────────
-const tabs = ['All','Active', 'Planned', 'Completed' ];
+const tabs = ['All', 'Planned', 'Active', 'Completed'];
 
 // ─── Main Page ─────────────────────────────────────────────────────
 export default function Ventures() {
@@ -606,7 +606,7 @@ export default function Ventures() {
           </div>
         </div>
 
-        <div className="hidden md:grid grid-cols-[1.5fr_120px_160px_140px_100px] gap-4 border-b border-zinc-200 dark:border-gray-800/60 px-4 py-2.5 text-[10px] font-bold uppercase tracking-wider text-zinc-405 dark:text-zinc-500">
+        <div className="hidden md:grid grid-cols-[1.5fr_120px_160px_140px_100px] gap-4 border-b border-zinc-200 dark:border-gray-800/60 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-zinc-405 dark:text-zinc-500">
           <div className="flex items-center gap-3">
             <div className="w-4" />
             <div className="w-6" />
@@ -714,9 +714,9 @@ export default function Ventures() {
                       <Kayak className="h-3.5 w-3.5 text-indigo-400" />
                     </div>
                     <div className="flex flex-col min-w-0">
-                      <span className="text-sm font-semibold text-zinc-900 dark:text-white truncate">{venture.name}</span>
+                      <span className="text-base font-semibold text-zinc-900 dark:text-white truncate">{venture.name}</span>
                       {venture.summary && (
-                        <span className="text-xs text-zinc-500 dark:text-zinc-500 mt-0.5 line-clamp-2" title={venture.summary}>
+                        <span className="text-sm text-zinc-500 dark:text-zinc-500 mt-0.5 line-clamp-2" title={venture.summary}>
                           {venture.summary}
                         </span>
                       )}
@@ -741,7 +741,7 @@ export default function Ventures() {
                         status={venture.status}
                         disabled={!isAdmin}
                         onSelect={(status) => handleStatusSelect(venture._id as Id<"ventures">, status)}
-                        className="border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-850 text-zinc-800 dark:text-zinc-300 justify-between w-full shadow-sm rounded-lg"
+                        className="bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 shadow-sm px-2.5 py-1 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors justify-between w-full"
                       />
                     </div>
                   </div>
@@ -754,7 +754,7 @@ export default function Ventures() {
                         members={members ?? []}
                         disabled={!isAdmin}
                         onSelect={(member) => handleOwnerSelect(venture._id as Id<"ventures">, member)}
-                        className="border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-850 text-zinc-800 dark:text-zinc-300 justify-between w-full font-medium shadow-sm rounded-lg"
+                        className="bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 shadow-sm px-2.5 py-1 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors justify-between w-full"
                       />
                     </div>
                   </div>
@@ -766,7 +766,7 @@ export default function Ventures() {
                         selectedDateStr={venture.targetDeadline}
                         disabled={!isAdmin}
                         onSelectDate={(dateStr) => handleTargetDeadlineSelect(venture._id as Id<"ventures">, dateStr)}
-                        className="border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-855 text-zinc-800 dark:text-zinc-300 justify-between w-full shadow-sm rounded-lg"
+                        className="bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 shadow-sm px-2.5 py-1 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors justify-between w-full"
                       />
                     </div>
                   </div>
@@ -791,9 +791,9 @@ export default function Ventures() {
                     <Kayak className="h-3.5 w-3.5 text-indigo-400" />
                   </div>
                   <div className="flex flex-col min-w-0">
-                    <span className="text-sm font-semibold text-zinc-900 dark:text-white group-hover:text-indigo-650 dark:group-hover:text-indigo-400 transition-colors truncate">{venture.name}</span>
+                    <span className="text-base font-semibold text-zinc-900 dark:text-white group-hover:text-indigo-650 dark:group-hover:text-indigo-400 transition-colors truncate">{venture.name}</span>
                     {venture.summary && (
-                      <span className="text-xs text-zinc-500 dark:text-zinc-550 truncate max-w-sm md:max-w-md lg:max-w-lg mt-0.5" title={venture.summary}>
+                      <span className="text-sm text-zinc-500 dark:text-zinc-550 truncate max-w-sm md:max-w-md lg:max-w-lg mt-0.5" title={venture.summary}>
                         {venture.summary}
                       </span>
                     )}
@@ -805,7 +805,7 @@ export default function Ventures() {
                     status={venture.status}
                     disabled={!isAdmin}
                     onSelect={(status) => handleStatusSelect(venture._id as Id<"ventures">, status)}
-                    className="hover:bg-zinc-100 dark:hover:bg-zinc-800/60"
+                    className="bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 shadow-sm px-2.5 py-1 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors"
                   />
                 </div>
 
@@ -815,7 +815,7 @@ export default function Ventures() {
                     members={members ?? []}
                     disabled={!isAdmin}
                     onSelect={(member) => handleOwnerSelect(venture._id as Id<"ventures">, member)}
-                    className="hover:bg-zinc-100 dark:hover:bg-zinc-800/60"
+                    className="bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 shadow-sm px-2.5 py-1 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors"
                   />
                 </div>
 
@@ -824,7 +824,7 @@ export default function Ventures() {
                     selectedDateStr={venture.targetDeadline}
                     disabled={!isAdmin}
                     onSelectDate={(dateStr) => handleTargetDeadlineSelect(venture._id as Id<"ventures">, dateStr)}
-                    className="hover:bg-zinc-100 dark:hover:bg-zinc-800/60"
+                    className="bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 shadow-sm px-2.5 py-1 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors"
                   />
                 </div>
 
