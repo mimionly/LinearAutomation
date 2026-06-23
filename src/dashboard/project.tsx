@@ -15,7 +15,7 @@ import {
   CircleX,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { useTheme } from "next-themes";
@@ -57,21 +57,7 @@ const priorityConfig: Record<Priority, { label: string; icon: React.ReactNode }>
   "No-priority": { label: "No priority", icon: <BarChart2 className="size-3.5 text-muted-foreground opacity-45" /> },
 };
 
-function ProgressCircle({ value }: { value: number }) {
-  const r = 7;
-  const circ = 2 * Math.PI * r;
-  const offset = circ - (value / 100) * circ;
-  return (
-    <svg width="18" height="18" viewBox="0 0 18 18" className="-rotate-90">
-      <circle cx="9" cy="9" r={r} fill="none" stroke="currentColor"
-        strokeWidth="2" className="text-muted/30" />
-      <circle cx="9" cy="9" r={r} fill="none" stroke="currentColor"
-        strokeWidth="2" strokeDasharray={circ} strokeDashoffset={offset}
-        strokeLinecap="round"
-        className={value === 100 ? "text-blue-500" : "text-emerald-500"} />
-    </svg>
-  );
-}
+
 
 function AvatarPlaceholder({ name }: { name: string }) {
   return (
@@ -136,7 +122,7 @@ export function ProjectsPage() {
     return dbProjects.map(mapDbProject);
   }, [dbProjects]);
 
-  const [selected, setSelected] = React.useState<Set<string>>(new Set());
+
   const [isCreateOpen, setIsCreateOpen] = React.useState(false);
 
   // Form states for creating a project
@@ -155,13 +141,7 @@ export function ProjectsPage() {
   const [showEmojiPicker, setShowEmojiPicker] = React.useState(false);
   const [selectedEmoji, setSelectedEmoji] = React.useState(" ");
 
-  const toggleSelect = (id: string) => {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-  };
+
 
   const handleCreateProject = async () => {
     if (!projectName.trim()) return;
@@ -258,29 +238,19 @@ export function ProjectsPage() {
           <tbody>
             {projects.map((project) => {
               const priorityVal = priorityConfig[project.priority];
-              const isSelected = selected.has(project.id);
+            
               return (
                 <tr
                   key={project.id}
                   onClick={() => navigate(`/projects/${project.id}`)}
-                  className={`group border-b border-border/50 hover:bg-muted/40 transition-colors cursor-pointer ${
-                    isSelected ? "bg-muted/30" : ""
-                  }`}
+                  className="group border-b border-border/50 hover:bg-muted/40 transition-colors cursor-pointer "
                 >
-                  {/* Checkbox */}
-                  <td className="pl-1 py-2.5" onClick={(e) => e.stopPropagation()}>
-                    <Input
-                    
-                      checked={isSelected}
-                      onChange={() => toggleSelect(project.id)}
-                      className="rounded size-3.5 accent-primary opacity-0 group-hover:opacity-100 transition-opacity"
-                    />
-                  </td>
+                <td></td>
 
                   {/* Name + update */}
                   <td className="py-2.5 pr-4" onClick={() => navigate(`/projects/${project.id}`)}>
                     <div className="flex items-center gap-2 min-w-0 cursor-pointer">
-                      <ProgressCircle value={project.progress} />
+                     
                       <span className="font-medium text-foreground hover:text-[#5e6ad2] dark:hover:text-[#6e7bf2] hover:underline truncate transition-all duration-200" onClick={(e) => { e.stopPropagation(); navigate(`/projects/${project.id}`); }}>
                         {project.name}
                       </span>
