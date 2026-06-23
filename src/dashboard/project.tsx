@@ -8,11 +8,12 @@ import {
   ChevronDown,
   Users,
   CircleDashed,
- 
+  CircleAlert,
   CheckCircle2,
   Hexagon,
   Timer,
   CircleX,
+  Minus
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -50,11 +51,12 @@ interface Project {
 
 
 const priorityConfig: Record<Priority, { label: string; icon: React.ReactNode }> = {
-  urgent: { label: "Urgent", icon: <BarChart2 className="size-3.5 text-red-500" /> },
+  urgent: { label: "Urgent", icon: <CircleAlert className="size-3.5 text-red-500" /> },
   high:   { label: "High",   icon: <BarChart2 className="size-3.5 text-orange-400" /> },
   medium: { label: "Medium", icon: <BarChart2 className="size-3.5 text-yellow-400" /> },
   low:    { label: "Low",    icon: <BarChart2 className="size-3.5 text-muted-foreground" /> },
-  "No-priority": { label: "No priority", icon: <BarChart2 className="size-3.5 text-muted-foreground opacity-45" /> },
+  "No-priority": { label: "No priority", icon: <Minus
+     className="size-3.5 text-muted-foreground opacity-45" /> },
 };
 
 
@@ -471,7 +473,7 @@ export function ProjectsPage() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-40 bg-popover text-popover-foreground border border-border shadow-lg rounded-lg p-1 z-50">
                   <DropdownMenuItem onClick={() => setPriority("urgent")} className="flex items-center gap-2 cursor-pointer">
-                    <BarChart2 className="size-3 text-red-500" />
+                    <CircleAlert className="size-3 text-red-500" />
                     Urgent
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setPriority("high")} className="flex items-center gap-2 cursor-pointer">
@@ -487,7 +489,7 @@ export function ProjectsPage() {
                     Low
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setPriority("No-priority")} className="flex items-center gap-2 cursor-pointer">
-                    <BarChart2 className="size-3 text-muted-foreground opacity-45" />
+                    <Minus className="size-3 text-muted-foreground opacity-45" />
                     No priority
                   </DropdownMenuItem>
                 </DropdownMenuContent>

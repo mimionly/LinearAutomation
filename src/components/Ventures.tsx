@@ -7,7 +7,7 @@ import {
   ChevronDown,
   User,
   Check,
-  Calendar as CalendarIcon,
+  CalendarX2 as CalendarIcon,
   CircleDashed,
   Play,
 } from 'lucide-react';
@@ -512,6 +512,7 @@ export default function Ventures() {
   const isAdmin = currentUser?.role === 'Admin' || currentUser?.role === 'admin' || isClerkAdmin;
   const dbVentures = useQuery(api.ventures.listVentures);
   const members = useQuery(api.members.listMembers) as Member[] | undefined;
+  const projects = useQuery(api.linear.fetchProjects);
 
   const updateOwner = useMutation(api.ventures.updateOwner);
   const updateStatus = useMutation(api.ventures.updateStatus);
@@ -727,7 +728,15 @@ export default function Ventures() {
                     onClick={(e) => e.stopPropagation()}
                   >
                     <CheckCircle2 className="h-3.5 w-3.5 text-indigo-500" />
-                    <span>{venture.projects ?? 0}</span>
+                    <span>
+                      {projects
+                        ? (() => {
+                            const vp = projects.filter(p => p.ventureId === venture._id);
+                            const comp = vp.filter(p => p.state === 'completed').length;
+                            return `${comp}/${vp.length}`;
+                          })()
+                        : "..."}
+                    </span>
                   </div>
                 </div>
 
@@ -830,7 +839,15 @@ export default function Ventures() {
 
                 <div className="justify-self-end flex items-center gap-1.5 text-zinc-650 dark:text-gray-400 text-sm pr-2">
                   <CheckCircle2 className="h-4 w-4 text-indigo-400" />
-                  <span>{venture.projects ?? 0}</span>
+                  <span>
+                    {projects
+                      ? (() => {
+                          const vp = projects.filter(p => p.ventureId === venture._id);
+                          const comp = vp.filter(p => p.state === 'completed').length;
+                          return `${comp}/${vp.length}`;
+                        })()
+                      : "..."}
+                  </span>
                 </div>
               </div>
             );

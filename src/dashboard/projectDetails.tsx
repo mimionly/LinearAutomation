@@ -18,9 +18,10 @@ import {
   ArrowLeft,
   BarChart2,
   CircleDashed,
-  
+  CircleAlert  , 
+  Minus,
   CheckCircle2,
-  
+  CalendarX2,
   Flag,
   Activity as ActivityIcon,
   ListTodo,
@@ -51,11 +52,11 @@ import { cn } from "@/lib/utils";
 type Priority = "urgent" | "high" | "medium" | "low" | "No-priority";
 
 const priorityConfig: Record<Priority, { label: string; icon: React.ReactNode }> = {
-  urgent: { label: "Urgent", icon: <BarChart2 className="size-3.5 text-red-500" /> },
+  urgent: { label: "Urgent", icon: <CircleAlert className="size-3.5 text-red-500" /> },
   high:   { label: "High",   icon: <BarChart2 className="size-3.5 text-orange-500" /> },
   medium: { label: "Medium", icon: <BarChart2 className="size-3.5 text-yellow-500" /> },
   low:    { label: "Low",    icon: <BarChart2 className="size-3.5 text-muted-foreground" /> },
-  "No-priority": { label: "No priority", icon: <BarChart2 className="size-3.5 text-muted-foreground opacity-40" /> },
+  "No-priority": { label: "No priority", icon: <Minus className="size-3.5 text-muted-foreground opacity-40" /> },
 };
 
 function AvatarPlaceholder({ name, size = 20 }: { name: string; size?: number }) {
@@ -77,7 +78,7 @@ const getStatusIcon = (s?: string, className?: string) => {
     case "unstarted":
     case "planned":
       return <Hexagon className={cn("text-zinc-400 dark:text-zinc-500 shrink-0", className)} />;
-    case "started":
+    case "In-progress":
     case "in-progress":
       return <Timer className={cn("text-blue-500 dark:text-blue-500 shrink-0", className)} />;
     case "completed":
@@ -319,7 +320,7 @@ export default function ProjectDetailsPage() {
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-40 z-50">
-              {["backlog", "planned", "started", "completed", "canceled"].map((st) => (
+              {["backlog", "planned", "In-progress", "completed", "canceled"].map((st) => (
                 <DropdownMenuItem
                   key={st}
                   onClick={() => handleUpdateField({ state: st })}
@@ -347,16 +348,16 @@ export default function ProjectDetailsPage() {
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-40 z-50">
-              {(Object.keys(priorityConfig) as Priority[]).map((pr) => (
-                <DropdownMenuItem
-                  key={pr}
-                  onClick={() => handleUpdateField({ priority: mapPriorityToNumber(pr) })}
-                  className="flex items-center gap-2 cursor-pointer text-xs"
-                >
-                  {priorityConfig[pr].icon}
-                  {priorityConfig[pr].label}
-                </DropdownMenuItem>
-              ))}
+             {(Object.keys(priorityConfig) as Priority[]).map((pr) => (
+  <DropdownMenuItem
+    key={pr}
+    onClick={() => handleUpdateField({ priority: mapPriorityToNumber(pr) })}
+    className={cn("flex items-center gap-2 cursor-pointer text-xs group/pri", pr === "urgent" && "hover:[&_svg]:text-red-500")}
+  >
+    {priorityConfig[pr].icon}
+    {priorityConfig[pr].label}
+  </DropdownMenuItem>
+))}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -478,7 +479,7 @@ export default function ProjectDetailsPage() {
             <DropdownMenu>
               <DropdownMenuTrigger disabled={!isAdmin}>
                 <button disabled={!isAdmin} className={`flex items-center gap-1 px-2 py-1 rounded-md border border-zinc-200 dark:border-zinc-800 ${isAdmin ? 'hover:bg-zinc-100/40 dark:hover:bg-zinc-800/40' : 'opacity-70 cursor-not-allowed'} font-medium transition-colors text-zinc-800 dark:text-zinc-200`} title="End date">
-                  <CalendarIcon className="size-3 opacity-60 mr-1" />
+                  <CalendarX2 className="size-3 opacity-60 mr-1" />
                   <span>
                     {project.targetDate
                       ? new Date(project.targetDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
@@ -533,12 +534,63 @@ export default function ProjectDetailsPage() {
         </div>
 
         {/* 6. Tags Row */}
-        <div className="flex items-center justify-between text-xs">
-          <span className="text-zinc-500 dark:text-zinc-400 font-semibold">Tags</span>
-          <button disabled={!isAdmin} className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-zinc-200 dark:border-zinc-800 ${isAdmin ? 'hover:bg-zinc-100/40 dark:hover:bg-zinc-800/40 hover:text-zinc-800 dark:hover:text-zinc-400 text-zinc-450 dark:text-zinc-500' : 'opacity-70 cursor-not-allowed text-zinc-450 dark:text-zinc-500'} font-medium transition-colors text-[11px]`}>
-            <span>Add tag</span>
-          </button>
-        </div>
+       {/* 6. Tags Row */}
+<div className="flex flex-col gap-2 text-xs">
+  <div className="flex items-center justify-between">
+    <span className="text-zinc-500 dark:text-zinc-400 font-semibold">Tags</span>
+    {isAdmin && (
+      <button
+        onClick={() => {
+          const tag = prompt("Enter tag name:");
+          if (!tag?.trim()) return;
+          const colors = [
+            "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400",
+            "bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400",
+            "bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400",
+            "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400",
+            "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400",
+            "bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400",
+            "bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400",
+            "bg-pink-100 text-pink-600 dark:bg-pink-900/30 dark:text-pink-400",
+          ];
+          // deterministic color based on tag text
+          const colorClass = colors[
+            tag.trim().split("").reduce((acc, c) => acc + c.charCodeAt(0), 0) % colors.length
+          ];
+          const currentTags = project.tags || [];
+          handleUpdateField({ tags: [...currentTags, { label: tag.trim(), color: colorClass }] });
+        }}
+        className="flex items-center gap-1 px-2.5 py-1.5 rounded-md border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100/40 dark:hover:bg-zinc-800/40 text-zinc-500 dark:text-zinc-400 font-medium transition-colors"
+      >
+        <PlusCircle className="h-3 w-3" />
+        Add tag
+      </button>
+    )}
+  </div>
+  {(project.tags || []).length > 0 && (
+    <div className="flex flex-wrap gap-1.5">
+      {(project.tags || []).map((tag: any, idx: number) => (
+        <span
+          key={idx}
+          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium ${tag.color}`}
+        >
+          {tag.label}
+          {isAdmin && (
+            <button
+              onClick={() => {
+                const updated = (project.tags || []).filter((_: any, i: number) => i !== idx);
+                handleUpdateField({ tags: updated });
+              }}
+              className="hover:opacity-70 transition-opacity ml-0.5"
+            >
+              ×
+            </button>
+          )}
+        </span>
+      ))}
+    </div>
+  )}
+</div>
       </div>
     );
 

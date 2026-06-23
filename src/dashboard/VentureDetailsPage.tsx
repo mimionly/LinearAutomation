@@ -442,17 +442,7 @@ export default function VentureDetailsPage() {
   }, [dbProjects, ventureId]);
 
   // Project stats
-  const projectStats = useMemo(() => {
-    const stats = { planned: 0, inProgress: 0, completed: 0, total: 0 };
-    stats.total = ventureProjects.length;
-    ventureProjects.forEach((p) => {
-      const state = p.state?.toLowerCase() || '';
-      if (state === 'completed') stats.completed++;
-      else if (state === 'started' || state === 'in-progress' || state === 'in progress') stats.inProgress++;
-      else stats.planned++;
-    });
-    return stats;
-  }, [ventureProjects]);
+  
 
   // Owner
   const owner = useMemo(() => {
@@ -835,9 +825,11 @@ export default function VentureDetailsPage() {
                 </div>
               )}
             </div>
-            {/* Associated Projects Row */}
-            <div className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
-              Associated Projects
+            <div className="flex items-center gap-2 mt-1 mb-2">
+              <span className="text-sm text-zinc-500 dark:text-zinc-400">
+                Associated Projects
+              </span>
+         
             </div>
             <div className="flex flex-col gap-3 min-w-0 pb-6">
 
@@ -849,45 +841,53 @@ export default function VentureDetailsPage() {
                       onClick={() => navigate(`/projects/${proj.id}`)}
                       className="flex flex-col rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/40 p-4 shadow-sm hover:shadow-md hover:border-indigo-500/30 transition-all duration-200 cursor-pointer group relative overflow-hidden"
                     >
-                      <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-start justify-between mb-2">
                         <div className="flex items-center gap-3">
-                          <div className="flex items-center justify-center size-9 bg-zinc-50 dark:bg-zinc-800/80 rounded-lg border border-zinc-100 dark:border-zinc-700/50 shadow-sm">
+                          <div className="flex items-center justify-center size-9 bg-zinc-50 dark:bg-zinc-800/80 rounded-lg border border-zinc-100 dark:border-zinc-700/50 shadow-sm shrink-0">
                             <span className="text-lg">{proj.iconEmoji || '📁'}</span>
                           </div>
                           <span className="font-semibold text-zinc-900 dark:text-zinc-100 line-clamp-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                             {proj.name}
                           </span>
                         </div>
-                        <div className="size-6 rounded-full bg-zinc-50 dark:bg-zinc-800 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all transform scale-90 group-hover:scale-100">
+                        <div className="size-6 rounded-full bg-zinc-50 dark:bg-zinc-800 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all transform scale-90 group-hover:scale-100 shrink-0">
                           <ExternalLink className="h-3 w-3 text-zinc-500 dark:text-zinc-400 group-hover:text-indigo-500" />
                         </div>
                       </div>
                       
-                      <p className="text-sm text-zinc-500 dark:text-zinc-400 line-clamp-2 mb-4 flex-1 h-10">
+                      <p className="text-sm text-zinc-500 dark:text-zinc-400 line-clamp-2 mb-3 flex-1 h-10">
                         {proj.description || <span className="italic opacity-50">No description provided.</span>}
                       </p>
-                      
-                      <div className="mt-auto pt-3 border-t border-zinc-100 dark:border-zinc-800/60 flex items-center justify-between">
-                        <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/50 dark:border-zinc-700/50">
+
+                      {/* Metadata Row: Status, Owner, Target Date */}
+                      <div className="flex flex-wrap items-center gap-3 mb-4">
+                        <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/50 dark:border-zinc-700/50" title="Status">
                           {getProjectStatusIcon(proj.state, 'h-3 w-3')}
-                          <span className="text-xs font-medium capitalize text-zinc-600 dark:text-zinc-300">
+                          <span className="text-[11px] font-medium capitalize text-zinc-600 dark:text-zinc-300">
                             {proj.state || 'Planned'}
                           </span>
                         </div>
-                        {proj.progress !== undefined && (
-                          <div className="flex items-center gap-2" title={`${Math.round(proj.progress)}% completed`}>
-                            <div className="w-16 h-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
-                              <div 
-                                className="h-full bg-indigo-500 rounded-full transition-all duration-500" 
-                                style={{ width: `${proj.progress}%` }}
-                              />
+                        
+                        {proj.lead && (
+                          <div className="flex items-center gap-1.5 text-[11px] font-medium text-zinc-600 dark:text-zinc-400" title="Project Lead">
+                            <div className="flex items-center justify-center size-4 bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-full text-[8px] font-bold uppercase shrink-0">
+                              {proj.lead.name.slice(0, 2)}
                             </div>
-                            <span className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400 w-8 text-right">
-                              {Math.round(proj.progress)}%
+                            <span className="truncate max-w-[90px]">{proj.lead.name}</span>
+                          </div>
+                        )}
+
+                        {proj.targetDate && (
+                          <div className="flex items-center gap-1.5 text-[11px] font-medium text-zinc-600 dark:text-zinc-400" title="Target Date">
+                            <CalendarX2 className="h-3 w-3 opacity-70 shrink-0" />
+                            <span className="truncate">
+                              {new Date(proj.targetDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                             </span>
                           </div>
                         )}
                       </div>
+                      
+                     
                     </div>
                   ))}
                 </div>
